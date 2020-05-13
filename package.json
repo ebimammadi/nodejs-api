@@ -1,0 +1,30 @@
+{
+  "name": "nodejs-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ebimammadi/nodejs-api.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ebimammadi/nodejs-api/issues"
+  },
+  "homepage": "https://github.com/ebimammadi/nodejs-api#readme",
+  "dependencies": {
+    "config": "^3.3.1",
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "helmet": "^3.22.0",
+    "joy": "^0.1.1",
+    "mongoose": "^5.9.13",
+    "nodemon": "^2.0.3"
+  }
+}
