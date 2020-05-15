@@ -1,0 +1,1 @@
+This app is for the api of the delivery platform

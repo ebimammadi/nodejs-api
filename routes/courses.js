@@ -1,0 +1,51 @@
+const express = require('express');
+const router = express.Router();
+
+const Joi = require('joi');
+const mongoose = require('mongoose');
+
+const Course = require('../models/Course');//Model
+const { regex } = require('../lib'); //lib functions
+
+
+//routes
+router.get('/', async (req,res) => {
+    const query = {}, input = {};
+    if (req.query.name) {
+        query["name"] = regex(req.query.name);
+        input["name"] = req.query.name
+    }
+
+    const { error } = validate(input);
+    if (error) return res.status(400).send(`validationError: ${error.details[0].message}`)
+    
+    const courses = await Course.find(query);
+    return res.send(courses);
+});
+
+//createCourse(); //would add a test course to the mongoDB
+async function createCourse() {
+    const course = new Course({
+        name: 'web teaching',
+        auther: 'Ebi',
+        category: 'web',
+        isPublished: true,
+        price: 50
+    })
+    try {
+        const result = await course.save();
+        console.log(result);
+    } catch(err) {
+        console.log(err.message);
+    }
+}
+
+
+const validate = (course) => {
+    const schema = {
+        name: Joi.string()
+    };
+    return Joi.validate(course,schema);
+}
+
+module.exports = router;
