@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
-const PasswordComplexity = require('joi-password-complexity');
+const passwordComplexity = require('joi-password-complexity');
 const Joi = require('joi');
-
+const _ = require('lodash');
 const mongoose = require('mongoose');
 
 //schema
@@ -23,7 +23,7 @@ const schema = new mongoose.Schema({
         minlength: 5, 
         maxlength: 1024 
     },
-    createDate: { 
+    publishedDate: { 
         type: Date,
          Default: Date.now
     },
@@ -37,11 +37,14 @@ const schema = new mongoose.Schema({
         Default: 'user'  
     }
 });
+
+schema.methods.generateAuthToken = function() {
+    return token = jwt.sign( _.pick(this, ['email','name']), process.env.JWT_PRIVATE_KEY );
+}
 //model
 const User = mongoose.model('User', schema);
 
-const validateUser = (user) => {
-    const regexp = new RegExp("((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%]).{8,255})");
+const validatePassword = (password) => {
     const complexityOptions = {
         min: 8,
         max: 255,
@@ -57,42 +60,19 @@ const validateUser = (user) => {
            If requirementCount=0, then it takes count as 4
        */
     };
+    
+    return passwordComplexity(complexityOptions).validate(password);
+};
+
+const validateUser = (user) => {    
     const schema = {
         name: Joi.string().required().min(5).max(255),
         email: Joi.string().email().required().min(5).max(255),
-        password: new PasswordComplexity(complexityOptions).required()
-        //password: Joi.string().required().min(8).max(255).regex(regexp)
-        //.error(() => { return {message: 'Password in not complex'}})
-        // .error(errors => {
-        //     errors.forEach(err => {
-        //       switch (err.type) {
-        //         case "string.regex":
-        //           err.message = "Value should not be empty!";
-        //           break;
-        //         case "string.min":
-        //           err.message = `Value should have at least ${err.context.limit} characters!`;
-        //           break;
-        //         case "string.max":
-        //           err.message = `Value should have at most ${err.context.limit} characters!`;
-        //           break;
-        //         default:
-        //           break;
-        //       }
-        //     });
-        //     return errors;
-        //   }),
-            //.error(() => { return {message: 'Password in not complex'}})
+        password: Joi.string().required() //password complexity would be handled by validatePassword
     };
     return Joi.validate(user,schema);
-}
-const complexityOptions = {
-    min: 8,
-    max: 30,
-    lowerCase: 1,
-    upperCase: 1,
-    numeric: 1,
-    symbol: 1,
-    requirementCount: 2,
-  }
+};
+
 exports.User = User;
 exports.validate = validateUser;
+exports.validatePassword = validatePassword;

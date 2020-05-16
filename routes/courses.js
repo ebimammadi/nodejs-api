@@ -4,7 +4,7 @@ const router = express.Router();
 const Joi = require('joi');
 const mongoose = require('mongoose');
 
-const Course = require('../models/Course');//Model
+const Course = require('../models/course');//Model
 const { regex } = require('../lib'); //lib functions
 
 
