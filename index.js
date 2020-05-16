@@ -13,10 +13,10 @@ const app = express();
 const cors = require('cors');
 const bodyParser = require('body-parser');
 
-if (!process.env.JWT_PRIVATE_KEY) {
+if (!process.env.JWT_KEY) {
     console.error('Fatal Error: jwtPrivateKey is not defined.');
     process.exit(1);
-    
+
 }
 //mongoose connect
 mongoose.connect(process.env.DB_CONNECT, { useNewUrlParser: true, useUnifiedTopology: true } )
@@ -25,15 +25,15 @@ mongoose.connect(process.env.DB_CONNECT, { useNewUrlParser: true, useUnifiedTopo
 mongoose.set('useCreateIndex', true);
 
 //Middlewares
+app.use(express.json());
 app.use(bodyParser.json());
-app.use(express.json()); //it's a middleware which parses the incoming JSON payload based on body-parser
-
 app.use(express.urlencoded({ extended: true })); // key=value&key=value
 
 app.use(cors());
 
 //Routes
 app.get('/', homeRoute);
+app.get('/validate', homeRoute);
 app.use('/courses', coursesRoute);
 app.use('/users', usersRoute);
 app.use('/auth', authRoute);

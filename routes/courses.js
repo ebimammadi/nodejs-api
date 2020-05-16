@@ -7,9 +7,11 @@ const mongoose = require('mongoose');
 const Course = require('../models/course');//Model
 const { regex } = require('../lib'); //lib functions
 
+//middlewares
+const auth = require('../middlewares/auth');
 
 //routes
-router.get('/', async (req,res) => {
+router.get('/', auth, async (req,res) => {
     const query = {}, input = {};
     if (req.query.name) {
         query["name"] = regex(req.query.name);
