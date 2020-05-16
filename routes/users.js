@@ -4,8 +4,15 @@ const _ =require('lodash');
 const { User, validate, validatePassword } = require('../models/user');
 const bcrypt = require('bcrypt');
 
+const auth = require('../middlewares/auth');
 
 //routes
+router.get('/me', auth, async (req, res) => {
+    console.log(req.user)
+    const user = await User.findById(req.user._id).select('-password');
+    return res.send(user);
+});
+
 router.post('/register', async (req,res) => {
     const { error } = validate(req.body);
     if (error) return res.status(400).send(`validationError: ${error.details[0].message}`)
