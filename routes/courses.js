@@ -7,8 +7,8 @@ const mongoose = require('mongoose');
 const Course = require('../models/course');//Model
 const { regex } = require('../lib'); //lib functions
 
-//middlewares
-const auth = require('../middlewares/auth');
+//middleware
+const auth = require('../middleware/auth');
 
 //routes
 router.get('/', auth, async (req,res) => {

@@ -23,11 +23,11 @@ const schema = new mongoose.Schema({
         minlength: 5, 
         maxlength: 1024 
     },
-    publishedDate: { 
+    date: { 
         type: Date,
-         Default: Date.now
+        Default: Date.now
     },
-    isActivated: { 
+    isActive: { 
         type: Boolean, 
         Default: true 
     },
@@ -36,7 +36,7 @@ const schema = new mongoose.Schema({
         enum: ['user','admin'],
         Default: 'user'  
     }
-});
+},{ minimize: false,strict: false });
 
 schema.methods.generateAuthToken = function() {
     return token = jwt.sign( _.pick(this, ['email','name','_id']), process.env.JWT_KEY );

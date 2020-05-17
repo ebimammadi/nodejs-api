@@ -1,4 +1,4 @@
-const config =require('dotenv/config'); //to read .env file e.g process.env.DB_CONNECT
+const config =require('dotenv/config'); //to read .env file
 const Joi = require('joi');
 Joi.onjectId = require('joi-objectid')(Joi);
 const mongoose = require('mongoose');
@@ -19,12 +19,14 @@ if (!process.env.JWT_KEY) {
 
 }
 //mongoose connect
+//mongoose.connect('mongodb://localhost/playground', { useNewUrlParser: true, useUnifiedTopology: true } )
 mongoose.connect(process.env.DB_CONNECT, { useNewUrlParser: true, useUnifiedTopology: true } )
     .then( () => console.log('mongoDB connected ...'))
     .catch( (err) => console.log('Error connecting MongoDB... ',err));
 mongoose.set('useCreateIndex', true);
+//mongoose.set('autoCreate', true);
 
-//Middlewares
+//Middleware 
 app.use(express.json());
 app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true })); // key=value&key=value

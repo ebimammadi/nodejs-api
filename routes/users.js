@@ -4,7 +4,7 @@ const _ =require('lodash');
 const { User, validate, validatePassword } = require('../models/user');
 const bcrypt = require('bcrypt');
 
-const auth = require('../middlewares/auth');
+const auth = require('../middleware/auth');
 
 //routes
 router.get('/me', auth, async (req, res) => {
@@ -23,11 +23,13 @@ router.post('/register', async (req,res) => {
     if (user) return res.status(400).json({ message: 'User already registered.' });
 
     user = new User(_.pick(req.body, ['name','email','password']));
-    
+    user.isActive = true;
+    user.userType = 'user';
+    user.publishedDate = undefined;
     user.password = await bcrypt.hash(user.password, await bcrypt.genSalt(10));
 
     try {
-        await user.save();
+        await user.save({minimize: false} );
         const token = user.generateAuthToken();
         user = _.pick(user, ['name', 'email', '_id']);
         return res.header('x-auth-token', token).send(user); 
