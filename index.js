@@ -1,5 +1,5 @@
 const config =require('dotenv/config'); //to read .env file
-const Joi = require('joi');
+const Joi = require('@hapi/joi');
 Joi.onjectId = require('joi-objectid')(Joi);
 const mongoose = require('mongoose');
 //customized_modules
