@@ -9,28 +9,23 @@ const auth = require('../middleware/auth');
 
 //routes
 router.get('/me', auth, async (req, res) => {
-    //console.log(req.user)
     const user = await User.findById(req.user._id).select('-password');
+    console.log(user)
     return res.send(user);
+    
 });
 
 router.post('/register', async (req,res) => {
     const { error } = validate(req.body);
-    if (error) return res.status(400).send(`validationError: ${error.details[0].message}`)
-    // const { error: passwordError } = validatePassword(req.body.password);
-    // if (passwordError) return res.status(400).send(passwordError.details[0].message);
+    if (error) return res.status(400).send({ message: `validationError: ${error.details[0].message}` });
+    if (!req.body.password) return res.status(400).send({ message:`password is required` });
     
     let user = await User.findOne({ email: req.body.email });
-    if (user) return res.status(400).json({ message: 'User already registered.' });
+    if (user) return res.status(400).json({ message: `User already registered.` });
 
     user = new User(_.pick(req.body, ['name','email','password']));
-    // user.isActive = true;
-    // user.userType = 'user';
-    // user.publishedDate = undefined;
     user.password = await bcrypt.hash(user.password, await bcrypt.genSalt(10));
 
-    console.log(user)
-    
     try {
         await user.save();
         const token = user.generateAuthToken();
