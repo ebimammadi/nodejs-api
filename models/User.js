@@ -1,11 +1,11 @@
 const jwt = require('jsonwebtoken');
+const Joi = require('@hapi/joi');
 const passwordComplexity = require('joi-password-complexity');
-const Joi = require('joi');
 const _ = require('lodash');
 const mongoose = require('mongoose');
 
-//schema
-const schema = new mongoose.Schema({
+//schema validate mongoose
+const userSchema = new mongoose.Schema({
     name: { 
         type: String, 
         required: true, 
@@ -25,54 +25,46 @@ const schema = new mongoose.Schema({
     },
     date: { 
         type: Date,
-        Default: Date.now
+        default: Date.now
     },
     isActive: { 
         type: Boolean, 
-        Default: true 
+        default: true 
     },
     userType: { 
         type: String, 
         enum: ['user','admin'],
-        Default: 'user'  
+        default: 'user'  
     }
-},{ minimize: false,strict: false });
+});
 
-schema.methods.generateAuthToken = function() {
-    return token = jwt.sign( _.pick(this, ['email','name','_id']), process.env.JWT_KEY );
+//generates a user token per login/register
+userSchema.methods.generateAuthToken = function() {
+    const payload = _.pick(this, ['email','name','_id']);
+    payload.exp = Math.floor(Date.now() / 1000) + (3600);
+    return token = jwt.sign( payload, process.env.JWT_KEY );
 }
-//model
-const User = mongoose.model('User', schema);
 
-const validatePassword = (password) => {
-    const complexityOptions = {
-        min: 8,
-        max: 255,
-        lowerCase: 1,
-        upperCase: 1,
-        numeric: 1,
-        symbol: 1,
-        requirementCount: 4 
-        /* 
-           Min & Max not considered in the count. 
-           Only lower, upper, numeric and symbol. 
-           requirementCount could be from 1 to 4 
-           If requirementCount=0, then it takes count as 4
-       */
-    };
-    
-    return passwordComplexity(complexityOptions).validate(password);
-};
+//model
+const User = mongoose.model('User', userSchema);
 
 const validateUser = (user) => {    
-    const schema = {
+    const schema = Joi.object({
         name: Joi.string().required().min(5).max(255),
         email: Joi.string().email().required().min(5).max(255),
-        password: Joi.string().required() //password complexity would be handled by validatePassword
-    };
-    return Joi.validate(user,schema);
+        password: passwordComplexity({
+            required: true,
+            min: 8,
+            max: 255,
+            lowerCase: 1,
+            upperCase: 1,
+            numeric: 1,
+            symbol: 1,
+            requirementCount: 4
+        })
+    });
+    return schema.validate(user);
 };
 
 exports.User = User;
 exports.validate = validateUser;
-exports.validatePassword = validatePassword;

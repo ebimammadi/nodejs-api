@@ -5,6 +5,7 @@ const bcrypt = require('bcrypt');
 const _ = require('lodash');
 const { User } = require('../models/user');
  
+//user login post
 router.post('/', async (req,res) => {
 
     const { error } = validateUser(req.body);
@@ -20,7 +21,7 @@ router.post('/', async (req,res) => {
     user = _.pick(user, ['name', 'email', '_id']);
     return res.header('x-auth-token', token).send(user); 
     
-    //write in login collectoin
+    //write in login-collectoin (to database)
 
 });
 
