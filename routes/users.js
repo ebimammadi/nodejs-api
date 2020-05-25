@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const _ =require('lodash');
-//const { User, validate, validatePassword } = require('../models/user');
 const { User, validate } = require('../models/user');
 const bcrypt = require('bcrypt');
 
@@ -17,8 +16,9 @@ router.get('/me', auth, async (req, res) => {
 
 router.post('/register', async (req,res) => {
     const { error } = validate(req.body);
-    if (error) return res.status(400).send({ message: `validationError: ${error.details[0].message}` });
-    if (!req.body.password) return res.status(400).send({ message:`password is required` });
+    if (error) return res.status(400).send({ message: `Validation error: ${error.details[0].message}` });
+    //password required to be checked seperately
+    if (!req.body.password) return res.status(400).send({ message:`Password is required.` });
     
     let user = await User.findOne({ email: req.body.email });
     if (user) return res.status(400).json({ message: `User already registered.` });
