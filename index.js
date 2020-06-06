@@ -5,15 +5,16 @@ const app = express();
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
-
-// const Joi = require('joi');//!depricated
+// const Joi = require('joi');//!depricated, instead hapi/joi
 // Joi.onjectId = require('joi-objectid')(Joi);
 
 //customized_modules
+const configResponseHeader = require('./middleware/responseHeader');
+
 const homeRoutes = require('./routes/home');
 const coursesRoutes = require('./routes/courses');
 const usersRoute = require('./routes/users');
-//const authRoute = require('./routes/auth');
+
 
 if (!process.env.JWT_KEY) {
 	console.error('Fatal Error: jwtPrivateKey is not defined.');
@@ -29,6 +30,9 @@ mongoose.set('useCreateIndex', true);
 //Middleware 
 //adds 2 seconds of intentional latency
 //app.use( (req,res, next) => setTimeout(next, 500))
+
+
+app.use(configResponseHeader);
 app.use(express.json());
 app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true })); // key=value&key=value
