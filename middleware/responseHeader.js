@@ -1,4 +1,4 @@
-const configResponseHeader = function(req, res, next) {
+const responseHeaderConfig = function (req, res, next) {
 	//res.header("Access-Control-Allow-Origin", "*");
 	//res.header("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT");
 	res.header("Access-Control-Expose-Headers", "x-auth-token");
@@ -6,4 +6,4 @@ const configResponseHeader = function(req, res, next) {
 	next();
 }
 
-module.exports = configResponseHeader;
+module.exports = responseHeaderConfig;
