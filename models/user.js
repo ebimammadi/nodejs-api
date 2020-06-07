@@ -38,13 +38,14 @@ const userSchema = new mongoose.Schema({
 	}
 });
 
-//generates a user token per login/register
+//generates a jwt token per login/register
 userSchema.methods.generateAuthToken = function() {
 	const payload = _.pick(this, ['email','name','_id','userType']);
 	payload.exp = Math.floor(Date.now() / 1000) + (process.env.JWT_EXP_HOUR * 3600);
 	return token = jwt.sign( payload, process.env.JWT_KEY );
 }
 
+//generate a refresh tiken
 userSchema.methods.generateRefreshToken = function() {
 	const payload = _.pick(this, ['email']);
 	payload.exp = Math.floor(Date.now() / 1000) + (process.env.REFRESH_EXP_HOUR * 3600);
