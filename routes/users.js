@@ -4,6 +4,7 @@ const router = express.Router();
 const _ =require('lodash');
 const bcrypt = require('bcrypt');
 const Joi = require('@hapi/joi');
+const jwt = require('jsonwebtoken');
 
 const { User, userRegisterValidate, userLoginValidate } = require('../models/user');
 
@@ -21,7 +22,7 @@ router.get('/me', auth, async (req, res) => {
 	}
 });
 
-//user register
+//user register signup
 router.post('/register', async (req,res) => {
     const { error } = userRegisterValidate(req.body);
     if (error) return res.status(400).send({ message: `Validation error: ${error.details[0].message}` });
@@ -36,9 +37,12 @@ router.post('/register', async (req,res) => {
 
     try {
         await user.save();
-        const token = user.generateAuthToken();
+				const token = user.generateAuthToken();
+				const refresh_token = user.generateRefreshToken();
         user = _.pick(user, ['name', 'email', '_id']);
-        return res.header('x-auth-token', token).send(user); 
+				return res.header('x-auth-token', token)
+							.header('refresh-token', refresh_token)
+							.send(user); 
     } catch(err) {
          return res.status(400).send(err.message);
     } 
@@ -48,21 +52,62 @@ router.post('/register', async (req,res) => {
 //user login post
 router.post('/login', async (req,res) => {
 
-    const { error } = userLoginValidate(req.body);
-    if (error) return res.status(400).send(`validationError: ${error.details[0].message}`)
-    
-    let user = await User.findOne({ email: req.body.email });
-    if (!user) return res.status(400).json({ message: 'Invalid email or password.' });
+	const { error } = userLoginValidate(req.body);
+	if (error) return res.status(400).send(`validationError: ${error.details[0].message}`)
+	
+	let user = await User.findOne({ email: req.body.email });
+	if (!user) return res.status(400).json({ message: 'Invalid email or password.' });
 
-    const validPassword = await bcrypt.compare(req.body.password, user.password);
-    if (!validPassword) return res.status(400).json({ message: 'Invalid email or password.' });
+	const validPassword = await bcrypt.compare(req.body.password, user.password);
+	if (!validPassword) return res.status(400).json({ message: 'Invalid email or password.' });
 
-    const token = user.generateAuthToken();
-    user = _.pick(user, ['name', 'email', '_id']);
-    return res.header('x-auth-token', token).send(user); 
-    
-    //write in login-collectoin (to database)
+	const token = user.generateAuthToken();
+	const refresh_token = user.generateRefreshToken();
+	user = _.pick(user, ['name', 'email', '_id']);
+	return res.header('x-auth-token', token)
+						.header('refresh-token', refresh_token)
+						.send(user); 
+	
+	//write in login-collectoin (to database)
 
+});
+
+router.get('/refresh', async(req,res) => {
+	let token = req.header('x-auth-token');
+	let refresh_token = req.header('refresh-token');
+	if (!token || !refresh_token )
+		return res.status(400).send({ message: 'Tokens are not available!' });
+	
+	const { email } = jwt.decode(token);
+	const { email:emailFromRefreshToken } = jwt.decode(refresh_token);
+	if ( email != emailFromRefreshToken)
+		return res.status(400).send({ message: 'Tokens mismatch!' });
+	
+	try{
+		
+		let user = await User.findOne({ email: email });
+		if (!user) return res.status(400).json({ message: 'Invalid email or password.' });
+
+		const decoded_refresh = jwt.verify(refresh_token, process.env.REFRESH_KEY + user.password); 
+		const nowTimeStamp = Math.floor(Date.now()/1000);
+		
+		if (nowTimeStamp > decoded_refresh.exp){
+			res.status(400).send({ message: 'Refresh token expired'});
+		}
+		
+		token = user.generateAuthToken();
+	 	refresh_token = user.generateRefreshToken();
+		user = _.pick(user, ['name', 'email', '_id']);
+		return res.header('x-auth-token', token)
+							.header('refresh-token', refresh_token)
+							.send(user); 
+
+	} catch(err){
+		console.log(err);
+		return res.status(400).send({ message: `Error on server!`, ...err});
+		
+	}
+	
 });
 
 module.exports = router;

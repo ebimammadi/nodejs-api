@@ -8,6 +8,15 @@ const mongoose = require('mongoose');
 // const Joi = require('joi');//!depricated, instead hapi/joi
 // Joi.onjectId = require('joi-objectid')(Joi);
 
+// const http = require('http');
+// const https = require('https');
+// const fs = require('fs');
+// const privateKey  = fs.readFileSync('ssl/key.pem', 'utf8');
+// const certificate = fs.readFileSync('ssl/cert.pem', 'utf8');
+// const credentials = {key: privateKey, cert: certificate};
+// const httpServer = http.createServer(app);
+// const httpsServer = https.createServer(credentials, app);
+
 //customized_modules
 const configResponseHeader = require('./middleware/responseHeader');
 
@@ -38,3 +47,5 @@ app.use('/users', usersRoute);
 //Setting the port for the application
 const port = process.env.PORT || 8080;
 app.listen(port,'localhost',() => console.log(`Listing on port ${port}...`) );
+//https.createServer(app).listen(port,'localhost',() => console.log(`Listing on port ${port}...`));
+//httpsServer.listen(port,'localhost',() => console.log(`Listing on port ${port}...`));
