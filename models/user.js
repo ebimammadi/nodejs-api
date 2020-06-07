@@ -40,15 +40,21 @@ const userSchema = new mongoose.Schema({
 
 //generates a user token per login/register
 userSchema.methods.generateAuthToken = function() {
-	const payload = _.pick(this, ['email','name','_id']);
-	payload.exp = Math.floor(Date.now() / 1000) + (3600);
+	const payload = _.pick(this, ['email','name','_id','userType']);
+	payload.exp = Math.floor(Date.now() / 1000) + (process.env.JWT_EXP_HOUR * 3600);
 	return token = jwt.sign( payload, process.env.JWT_KEY );
+}
+
+userSchema.methods.generateRefreshToken = function() {
+	const payload = _.pick(this, ['email']);
+	payload.exp = Math.floor(Date.now() / 1000) + (process.env.REFRESH_EXP_HOUR * 3600);
+	return token = jwt.sign( payload, process.env.REFRESH_KEY + this.password );
 }
 
 //model
 const User = mongoose.model('User', userSchema);
 
-const validateUser = (user) => {    
+const userRegisterValidate = (user) => {    
 	const schema = Joi.object({
 		name: Joi.string().required().min(5).max(255),
 		email: Joi.string().email().required().min(5).max(255),
@@ -66,5 +72,14 @@ const validateUser = (user) => {
 	return schema.validate(user);
 };
 
+const userLoginValidate = (user) => {    
+	const schema = Joi.object({
+			email: Joi.string().email().required().min(5).max(255),
+			password: Joi.string().required().min(8).max(255),
+	});
+	return schema.validate(user);
+}
+
 exports.User = User;
-exports.validate = validateUser;
+exports.userRegisterValidate = userRegisterValidate;
+exports.userLoginValidate = userLoginValidate;

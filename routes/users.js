@@ -5,20 +5,25 @@ const _ =require('lodash');
 const bcrypt = require('bcrypt');
 const Joi = require('@hapi/joi');
 
-const { User, validate } = require('../models/user');
+const { User, userRegisterValidate, userLoginValidate } = require('../models/user');
 
 const auth = require('../middleware/auth');
 
 //routes
 router.get('/me', auth, async (req, res) => {
-    const user = await User.findById(req.user._id).select('-password');
-    console.log(user)
-    return res.send(user);
+	try {
+		const user = await User.findById(req.user._id).select('-password');
+		console.log(user)
+		return res.send(user);
+	} catch (err) {
+		console.log(err);
+		return res.status(400).send({ message: `Error on server!`});
+	}
 });
 
 //user register
 router.post('/register', async (req,res) => {
-    const { error } = validate(req.body);
+    const { error } = userRegisterValidate(req.body);
     if (error) return res.status(400).send({ message: `Validation error: ${error.details[0].message}` });
     //password required to be checked seperately
     if (!req.body.password) return res.status(400).send({ message:`Password is required.` });
@@ -43,7 +48,7 @@ router.post('/register', async (req,res) => {
 //user login post
 router.post('/login', async (req,res) => {
 
-    const { error } = validateUser(req.body);
+    const { error } = userLoginValidate(req.body);
     if (error) return res.status(400).send(`validationError: ${error.details[0].message}`)
     
     let user = await User.findOne({ email: req.body.email });
@@ -59,13 +64,5 @@ router.post('/login', async (req,res) => {
     //write in login-collectoin (to database)
 
 });
-
-const validateUser = (user) => {    
-    const schema = Joi.object({
-        email: Joi.string().email().required().min(5).max(255),
-        password: Joi.string().required().min(8).max(255),
-    });
-    return schema.validate(user);
-}
 
 module.exports = router;
