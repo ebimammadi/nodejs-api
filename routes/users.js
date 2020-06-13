@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-
 const _ =require('lodash');
 const bcrypt = require('bcrypt');
 const Joi = require('@hapi/joi');
@@ -9,6 +8,7 @@ const jwt = require('jsonwebtoken');
 const { User, userRegisterValidate, userLoginValidate } = require('../models/user');
 
 const auth = require('../middleware/auth');
+
 
 //routes
 router.get('/me', auth, async (req, res) => {
@@ -64,8 +64,12 @@ router.post('/login', async (req,res) => {
 	const token = user.generateAuthToken();
 	const refresh_token = user.generateRefreshToken();
 	user = _.pick(user, ['name', 'email', '_id']);
+	const cookieSetting = { maxAge: parseInt(process.env.REFRESH_EXP_HOUR)*3600*1000, httpOnly: false }
+	console.log(cookieSetting)
+	console.log(parseInt(process.env.REFRESH_EXP_HOUR)*3600*1000)
 	return res.header('x-auth-token', token)
-						.header('refresh-token', refresh_token)
+						//.header('refresh-token2', refresh_token)
+						.cookie('refresh-token', refresh_token, cookieSetting)
 						.send(user); 
 	
 	//write in login-collectoin (to database)

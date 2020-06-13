@@ -3,6 +3,7 @@ const config = require('dotenv/config'); //to read .env file
 const express = require('express');
 const app = express();
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 // const Joi = require('joi');//!depricated, instead hapi/joi
@@ -34,6 +35,7 @@ mongoose.set('useCreateIndex', true);
 app.use( (req,res, next) => setTimeout(next, 500)); //adds 0.5 seconds of intentional latency
 app.use(configResponseHeader);
 app.use(express.json());
+app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true })); // key=value&key=value
 app.use(cors());
