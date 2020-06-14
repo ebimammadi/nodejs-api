@@ -2,6 +2,7 @@
 const config = require('dotenv/config'); //to read .env file
 const express = require('express');
 const app = express();
+const helmet = require('helmet');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
@@ -33,12 +34,13 @@ mongoose.set('useCreateIndex', true);
 
 //Middleware 
 app.use( (req,res, next) => setTimeout(next, 500)); //adds 0.5 seconds of intentional latency
+//app.use( helmet()); //! for security, it should be reactivated
+app.use(cors({ credentials: true, origin: 'http://localhost:3000' }));
 app.use(configResponseHeader);
 app.use(express.json());
 app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true })); // key=value&key=value
-app.use(cors());
 
 //!Routes
 app.use('/', homeRoutes);

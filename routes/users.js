@@ -64,9 +64,12 @@ router.post('/login', async (req,res) => {
 	const token = user.generateAuthToken();
 	const refresh_token = user.generateRefreshToken();
 	user = _.pick(user, ['name', 'email', '_id']);
-	const cookieSetting = { maxAge: parseInt(process.env.REFRESH_EXP_HOUR)*3600*1000, httpOnly: false }
-	console.log(cookieSetting)
-	console.log(parseInt(process.env.REFRESH_EXP_HOUR)*3600*1000)
+	const cookieSetting = { 
+		maxAge: parseInt(process.env.REFRESH_EXP_HOUR)*3600*1000, 
+		httpOnly: true 
+	};
+	console.log('cookie settings: ',cookieSetting)
+	//console.log(parseInt(process.env.REFRESH_EXP_HOUR)*3600*1000)
 	return res.header('x-auth-token', token)
 						//.header('refresh-token2', refresh_token)
 						.cookie('refresh-token', refresh_token, cookieSetting)
