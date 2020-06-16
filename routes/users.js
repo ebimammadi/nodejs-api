@@ -9,6 +9,10 @@ const { User, userRegisterValidate, userLoginValidate } = require('../models/use
 
 const auth = require('../middleware/auth');
 
+const cookieSetting = { 
+	maxAge: parseInt(process.env.JWT_EXP_HOUR)*3600*1000, 
+	httpOnly: true 
+};
 
 //routes
 router.get('/me', auth, async (req, res) => {
@@ -38,10 +42,9 @@ router.post('/register', async (req,res) => {
     try {
         await user.save();
 				const token = user.generateAuthToken();
-				const refresh_token = user.generateRefreshToken();
         user = _.pick(user, ['name', 'email', '_id']);
 				return res.header('x-auth-token', token)
-							.header('refresh-token', refresh_token)
+							.cookie('x-auth-token', token, cookieSetting)
 							.send(user); 
     } catch(err) {
          return res.status(400).send(err.message);
@@ -62,24 +65,17 @@ router.post('/login', async (req,res) => {
 	if (!validPassword) return res.status(400).json({ message: 'Invalid email or password.' });
 
 	const token = user.generateAuthToken();
-	const refresh_token = user.generateRefreshToken();
+	
 	user = _.pick(user, ['name', 'email', '_id']);
-	const cookieSetting = { 
-		maxAge: parseInt(process.env.REFRESH_EXP_HOUR)*3600*1000, 
-		httpOnly: true 
-	};
-	console.log('cookie settings: ',cookieSetting)
-	//console.log(parseInt(process.env.REFRESH_EXP_HOUR)*3600*1000)
 	return res.header('x-auth-token', token)
-						//.header('refresh-token2', refresh_token)
-						.cookie('refresh-token', refresh_token, cookieSetting)
+						.cookie('x-auth-token', token, cookieSetting)
 						.send(user); 
 	
 	//write in login-collectoin (to database)
 
 });
 
-router.get('/refresh', async(req,res) => {
+router.get('/@@@@@@refresh', async(req,res) => {
 	let token = req.header('x-auth-token');
 	let refresh_token = req.header('refresh-token');
 	if (!token || !refresh_token )
