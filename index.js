@@ -10,15 +10,6 @@ const mongoose = require('mongoose');
 // const Joi = require('joi');//!depricated, instead hapi/joi
 // Joi.onjectId = require('joi-objectid')(Joi);
 
-// const http = require('http');
-// const https = require('https');
-// const fs = require('fs');
-// const privateKey  = fs.readFileSync('ssl/key.pem', 'utf8');
-// const certificate = fs.readFileSync('ssl/cert.pem', 'utf8');
-// const credentials = {key: privateKey, cert: certificate};
-// const httpServer = http.createServer(app);
-// const httpsServer = https.createServer(credentials, app);
-
 //customized_modules
 const { responseHeaderConfig } = require('./middleware/headersCookie.js');
 
@@ -44,7 +35,7 @@ app.use(express.urlencoded({ extended: true })); // key=value&key=value
 
 //!Routes
 app.use('/', homeRoutes);
-app.use('/validate', homeRoutes);
+app.use('/about', homeRoutes);
 app.use('/courses', coursesRoutes);
 app.use('/users', usersRoute);
 

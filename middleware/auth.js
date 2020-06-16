@@ -9,16 +9,19 @@ const auth = (req, res, next) => {
 	if (!token) return res.status(401).json({ message: 'No valid token! Access denied.'});
 	
 	try{
-		const decodedToken = jwt.verify(token, process.env.JWT_KEY);
-		const user = new User(_.pick( decodedToken, ['name','email','password']));
-		const refreshedToken = user.generateAuthToken();
-		res.cookie('x-auth-token', refreshedToken, cookieSetting)
-		//res.cookie('testing', Date.now())
+		
+		res.cookie('x-auth-token', refreshToken(token), cookieSetting)
 		next();
 	} 
 	catch (ex) {
 		return res.status(400).json({ message: 'Invalid token!'});
 	}
+}
+
+const refreshToken = (previousToken) => {
+	const decodedToken = jwt.verify(previousToken, process.env.JWT_KEY);
+	const user = new User(_.pick( decodedToken, ['name','email','password','userType']));
+	return user.generateAuthToken();
 }
 
 module.exports = auth;

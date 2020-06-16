@@ -9,10 +9,7 @@ const { User, userRegisterValidate, userLoginValidate } = require('../models/use
 
 const auth = require('../middleware/auth');
 
-const cookieSetting = { 
-	maxAge: parseInt(process.env.JWT_EXP_HOUR)*3600*1000, 
-	httpOnly: true 
-};
+const { cookieSetting } = require('../middleware/headersCookie.js');
 
 //routes
 router.get('/me', auth, async (req, res) => {
