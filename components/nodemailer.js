@@ -1,7 +1,10 @@
 const nodemailer = require('nodemailer');
 const htmlToText = require('html-to-text');
 
-async function mail(to,subject,message) {
+async function mailer(to,subject,message,template) {
+  if (template) {
+    message = getTemplate(message, template);
+  }
   // Generate test SMTP service account from ethereal.email
   // Only needed if you don't have a real mail account for testing
   let testAccount = await nodemailer.createTestAccount();
@@ -34,5 +37,17 @@ async function mail(to,subject,message) {
   // Preview URL: https://ethereal.email/message/WaQKMgKddxQDoou...
 }
 
-module.exports = mail;
+
+const getTemplate = (message, template) => {
+  if (template=='passwordRecover'){
+    return `<span style="color: #6D9EEB; font-size:18px;" >
+      chapar<span style="color: #6AA84F">.tech</span>
+      </span><br><br>Recovery Link:<br>Please use the following link to recover your password:<br>
+      <a href="http://chapar.tech/recover-password/${message}" target="_blank">
+      http://chapar.tech/recover-password/${message}</a>`
+      ;
+  }
+}
+
+module.exports = mailer;
 //main().catch(console.error);
