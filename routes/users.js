@@ -4,7 +4,9 @@ const _ =require('lodash');
 const bcrypt = require('bcrypt');
 const Joi = require('@hapi/joi');
 const jwt = require('jsonwebtoken');
+const { v4: uuidv4 } = require('uuid');
 
+const mailer = require('../components/nodemailer');
 const { User, userRegisterValidate, userLoginValidate } = require('../models/user');
 
 const auth = require('../middleware/auth');
@@ -70,9 +72,24 @@ router.post('/login', async (req,res) => {
 						.cookie('x-auth-token', token, cookieSetting)
 						.send(user); 
 	
-	//write in login-collectoin (to database)
-
+	//!write in logins-collectoin (to database)
+	
 });
+
+router.post('/forget-password', async (req,res) => {
+	if (!req.body.email) return res.status(400).send(`Invalid email`);
+	let user = await User.findOne({ email: req.body.email });
+	const message = `Your request would be processed shortly. Please check your mailbox.`
+	if (!user) return res.status(400).json({ message });
+	const uniqueID = uuidv4()
+	user.set({passwordRecover: uniqueID});
+	await user.save();
+	const emailHTML = 
+	await mailer(req.body.email,'Recovery Link', uniqueID, 'passwordRecover').catch(console.error)
+	return res.json({ message });
+});
+
+//Todo: add logout to the code
 
 router.get('/@@@@@@refresh', async(req,res) => {
 	let token = req.header('x-auth-token');
