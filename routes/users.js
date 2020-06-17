@@ -89,6 +89,20 @@ router.post('/forget-password', async (req,res) => {
 	return res.json({ message });
 });
 
+router.get('/recover-password-verify/:link', async (req,res) => {
+	console.log(req.params.link)
+	return
+	if (!id) return res.status(400).send(`Invalid email`);
+	let user = await User.findOne({ email: req.body.passwordRecover });
+	const message = `Your request would be processed shortly. Please check your mailbox.`
+	if (!user) return res.status(400).json({ message });
+	const uniqueID = uuidv4()
+	user.set({passwordRecover: uniqueID});
+	await user.save();
+	const emailHTML = 
+	await mailer(req.body.email,'Recovery Link', uniqueID, 'passwordRecover').catch(console.error)
+	return res.json({ message });
+});
 //Todo: add logout to the code
 
 router.get('/@@@@@@refresh', async(req,res) => {
