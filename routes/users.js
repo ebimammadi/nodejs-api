@@ -26,7 +26,7 @@ router.get('/me', auth, async (req, res) => {
 //user register signup
 router.post('/register', async (req,res) => {
     const { error } = userRegisterValidate(req.body);
-    if (error) return res.status(400).send({ message: `Validation error: ${error.details[0].message}` });
+    if (error) return res.status(400).send({ message: `${error.details[0].message}` });
     //password required to be checked seperately
     if (!req.body.password) return res.status(400).send({ message:`Password is required.` });
     
