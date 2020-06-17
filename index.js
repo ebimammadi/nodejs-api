@@ -33,6 +33,8 @@ app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true })); // key=value&key=value
 
+//!BLOCK suspecious requests to the server by IP
+
 //!Routes
 app.use('/', homeRoutes);
 app.use('/about', homeRoutes);
