@@ -61,6 +61,8 @@ router.post('/login', async (req,res) => {
 	const validPassword = await bcrypt.compare(req.body.password, user.password);
 	if (!validPassword) return res.status(400).json({ message: 'Invalid email or password.' });
 
+	if (!user.isActive) return res.status(400).json({ message: 'Your account seems de-activated.' });
+
 	const token = user.generateAuthToken();
 	
 	user = _.pick(user, ['name', 'email', '_id']);
