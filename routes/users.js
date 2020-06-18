@@ -92,8 +92,8 @@ router.post('/forget-password', async (req,res) => {
 router.get('/recover-password-verify-code/:code', async (req,res) => {
 	const code = req.params.code;
 	let user = await User.findOne({ passwordRecoverCode: code });
-	if (!user) return res.status(400).json({ message: `The link seems invalid.` });
-	return res.json({ email: user.email });
+	if (!user) return res.json({ message: `The link seems invalid.` });
+	return res.json({ email: user.email, message: `Set your new password.` });
 });
 
 //Todo: add logout to the code
