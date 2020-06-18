@@ -7,7 +7,7 @@ const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 
 const mailer = require('../components/nodemailer');
-const { User, userRegisterValidate, userLoginValidate } = require('../models/user');
+const { User, userRegisterValidate, userLoginValidate, userRecoverValidate } = require('../models/user');
 
 const auth = require('../middleware/auth');
 
@@ -36,12 +36,12 @@ router.post('/register', async (req,res) => {
     if (user) return res.status(400).json({ message: `User already registered.` });
 
     user = new User(_.pick(req.body, ['name','email','password']));
-    user.password = await bcrypt.hash(user.password, await bcrypt.genSalt(10));
+		user.password = await bcrypt.hash(user.password, await bcrypt.genSalt(10));
 
     try {
-        await user.save();
+				await user.save();
+				user = _.pick(user, ['name', 'email', '_id']);
 				const token = user.generateAuthToken();
-        user = _.pick(user, ['name', 'email', '_id']);
 				return res.header('x-auth-token', token)
 							.cookie('x-auth-token', token, cookieSetting)
 							.send(user); 
@@ -49,6 +49,32 @@ router.post('/register', async (req,res) => {
          return res.status(400).send(err.message);
     } 
     
+});
+
+router.post('/recover-password', async (req,res) => {
+	//expected code&password
+	const { error } = userRecoverValidate(req.body);
+	if (error) return res.send({ message: `${error.details[0].message}` });
+	//password required to be checked seperately
+	if (!req.body.password) return res.status(400).json({ message:`Password is required.` });
+	
+	let user = await User.findOne({ passwordRecoverCode: req.body.code });
+	if (!user) return res.json({ message: `Recovery code is invalid.` });
+
+	const password = await bcrypt.hash(req.body.password, await bcrypt.genSalt(10));
+	user.set({password: password ,passwordRecoverCode: '-' });
+
+	try {
+		await user.save();
+		user = _.pick(user, ['name', 'email', '_id']);
+		const token = user.generateAuthToken();
+		return res.header('x-auth-token', token)
+					.cookie('x-auth-token', token, cookieSetting)
+					.send(user); 
+	} catch(err) {
+		return res.status(400).send(err.message);
+	} 
+	
 });
 
 //user login post
@@ -65,14 +91,13 @@ router.post('/login', async (req,res) => {
 
 	if (!user.isActive) return res.status(400).json({ message: 'Your account seems de-activated.' });
 
-	const token = user.generateAuthToken();
-	
 	user = _.pick(user, ['name', 'email', '_id']);
+	const token = user.generateAuthToken();	
 	return res.header('x-auth-token', token)
 						.cookie('x-auth-token', token, cookieSetting)
 						.send(user); 
 	
-	//!write in logins-collectoin (to database)
+	//!write in logins-collectoin (to database) for controlling sessions
 	
 });
 
@@ -84,7 +109,6 @@ router.post('/forget-password', async (req,res) => {
 	const uniqueID = uuidv4()
 	user.set({passwordRecover: uniqueID});
 	await user.save();
-	const emailHTML = 
 	await mailer(req.body.email,'Recovery Link', uniqueID, 'passwordRecover').catch(console.error)
 	return res.json({ message });
 });

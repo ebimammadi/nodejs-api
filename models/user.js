@@ -82,6 +82,23 @@ const userLoginValidate = (user) => {
 	return schema.validate(user);
 }
 
+const userRecoverValidate = (user) => {    
+	const schema = Joi.object({
+		code: Joi.string().required().min(36),
+		password: passwordComplexity({
+			required: true,
+			min: 8,
+			max: 255,
+			lowerCase: 1,
+			upperCase: 1,
+			numeric: 1,
+			symbol: 1,
+			requirementCount: 4
+		})
+	});
+	return schema.validate(user);
+};
 exports.User = User;
 exports.userRegisterValidate = userRegisterValidate;
 exports.userLoginValidate = userLoginValidate;
+exports.userRecoverValidate = userRecoverValidate;
