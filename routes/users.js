@@ -90,7 +90,7 @@ router.post('/forget-password', async (req,res) => {
 });
 
 router.get('/recover-password-verify/:link', async (req,res) => {
-	console.log(req.params.link)
+	console.log(req.params.link)//!continue
 	return
 	if (!id) return res.status(400).send(`Invalid email`);
 	let user = await User.findOne({ email: req.body.passwordRecover });
