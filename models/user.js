@@ -40,7 +40,7 @@ const userSchema = new mongoose.Schema({
 		type: String, 
 		default: 'false'
 	},
-	passwordRecover: {
+	passwordRecoverCode: {
 		type: String, 
 		default: '-'
 	}
