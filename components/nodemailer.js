@@ -39,12 +39,14 @@ async function mailer(to,subject,message,template) {
 
 
 const getTemplate = (message, template) => {
-  if (template=='passwordRecover'){
+  if (template=='passwordRecoverTemplate'){
     return `<span style="color: #6D9EEB; font-size:18px;" >
       chapar<span style="color: #6AA84F">.tech</span>
-      </span><br><br>Recovery Link:<br>Please use the following link to recover your password:<br>
+      </span><br><br>
+      Recovery Link:<br>Please use the following link to recover your password <br>
       <a href="${process.env.APP_PATH}/recover-password/${message}" target="_blank">
-      http://chapar.tech/recover-password/${message}</a>`
+        ${process.env.APP_PATH}/recover-password/${message}
+      </a>`
       ;
   }
 }

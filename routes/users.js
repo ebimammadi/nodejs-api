@@ -40,8 +40,8 @@ router.post('/register', async (req,res) => {
 
     try {
 				await user.save();
-				user = _.pick(user, ['name', 'email', '_id']);
 				const token = user.generateAuthToken();
+				user = _.pick(user, ['name', 'email', '_id']);
 				return res.header('x-auth-token', token)
 							.cookie('x-auth-token', token, cookieSetting)
 							.send(user); 
@@ -66,8 +66,8 @@ router.post('/recover-password', async (req,res) => {
 
 	try {
 		await user.save();
-		user = _.pick(user, ['name', 'email', '_id']);
 		const token = user.generateAuthToken();
+		user = _.pick(user, ['name', 'email', '_id']);
 		return res.header('x-auth-token', token)
 					.cookie('x-auth-token', token, cookieSetting)
 					.send(user); 
@@ -91,8 +91,8 @@ router.post('/login', async (req,res) => {
 
 	if (!user.isActive) return res.status(400).json({ message: 'Your account seems de-activated.' });
 
+	const token = user.generateAuthToken();
 	user = _.pick(user, ['name', 'email', '_id']);
-	const token = user.generateAuthToken();	
 	return res.header('x-auth-token', token)
 						.cookie('x-auth-token', token, cookieSetting)
 						.send(user); 
@@ -107,10 +107,10 @@ router.post('/forget-password', async (req,res) => {
 	const message = `Your request would be processed shortly. Please check your mailbox.`
 	if (!user) return res.status(400).json({ message });
 	const uniqueID = uuidv4()
-	user.set({passwordRecover: uniqueID});
+	user.set({ passwordRecoverCode: uniqueID});
 	await user.save();
-	await mailer(req.body.email,'Recovery Link', uniqueID, 'passwordRecover').catch(console.error)
-	return res.json({ message });
+	await mailer(req.body.email,'Recovery Link', uniqueID, 'passwordRecoverTemplate').catch(console.error)
+	return res.json({ message: message+'!' });
 });
 
 router.get('/recover-password-verify-code/:code', async (req,res) => {
