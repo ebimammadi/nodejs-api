@@ -12,6 +12,7 @@ const { User, userRegisterValidate, userLoginValidate, userRecoverValidate } = r
 const auth = require('../middleware/auth');
 
 const { cookieSetting } = require('../middleware/headersCookie.js');
+const createSession = require('../middleware/session');
 
 //routes
 router.get('/me', auth, async (req, res) => {
@@ -37,16 +38,19 @@ router.post('/register', async (req,res) => {
 
     user = new User(_.pick(req.body, ['name','email','password']));
 		user.password = await bcrypt.hash(user.password, await bcrypt.genSalt(10));
+		user.emailVerify = uuidv4();
 
     try {
-				await user.save();
-				const token = user.generateAuthToken();
-				user = _.pick(user, ['name', 'email', '_id']);
-				return res.header('x-auth-token', token)
-							.cookie('x-auth-token', token, cookieSetting)
-							.send(user); 
+			await user.save();
+			await mailer(user.email,`Welcome to ${process.env.APP_NAME}`,user,'userRegisterTemplate')
+			const token = user.generateAuthToken();
+			//await createSession({...user, token});//!session to log
+			user = _.pick(user, ['name', 'email', '_id']);
+			return res.header('x-auth-token', token)
+						.cookie('x-auth-token', token, cookieSetting)
+						.send(user); 
     } catch(err) {
-         return res.status(400).send(err.message);
+        return res.status(400).send(err.message);
     } 
     
 });
@@ -67,6 +71,7 @@ router.post('/recover-password', async (req,res) => {
 	try {
 		await user.save();
 		const token = user.generateAuthToken();
+		//await createSession({...user, token});//!session to log
 		user = _.pick(user, ['name', 'email', '_id']);
 		return res.header('x-auth-token', token)
 					.cookie('x-auth-token', token, cookieSetting)
@@ -92,6 +97,7 @@ router.post('/login', async (req,res) => {
 	if (!user.isActive) return res.status(400).json({ message: 'Your account seems de-activated.' });
 
 	const token = user.generateAuthToken();
+	//await createSession({...user, token});//!session to log
 	user = _.pick(user, ['name', 'email', '_id']);
 	return res.header('x-auth-token', token)
 						.cookie('x-auth-token', token, cookieSetting)
@@ -118,6 +124,15 @@ router.get('/recover-password-verify-code/:code', async (req,res) => {
 	let user = await User.findOne({ passwordRecoverCode: code });
 	if (!user) return res.json({ message: `The link seems invalid.` });
 	return res.json({ email: user.email, message: `Set your new password.` });
+});
+
+router.get('/verify-email/:code', async (req,res) => {
+	const code = req.params.code;
+	let user = await User.findOne({ emailVerify: code });
+	if (!user) return res.json({ message: `The link seems invalid.` });
+	user.set({ emailVerify: 'true'});
+	await user.save();
+	return res.json({ email: user.email, message: `Your email is now verified.` });
 });
 
 //Todo: add logout to the code
