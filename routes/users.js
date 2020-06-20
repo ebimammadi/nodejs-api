@@ -132,7 +132,7 @@ router.get('/verify-email/:code', async (req,res) => {
 	if (!user) return res.json({ message: `The link seems invalid.` });
 	user.set({ emailVerify: 'true'});
 	await user.save();
-	return res.json({ email: user.email, message: `Your email is now verified.` });
+	return res.json({ email: user.email, message: `ok` });
 });
 
 //Todo: add logout to the code
