@@ -64,10 +64,10 @@ const useEmailTemplate = (message, template) => {
       chapar<span style="color: #6AA84F">.tech</span>
       </span><br><br>
       Dear ${message.name},<br>Welcome, thank you for registering at ${process.env.APP_PATH}, please verify your email address by click at the following link:<br>
-      <a href="${process.env.APP_PATH}/verify-password/${message.emailVerify}" target="_blank">
-        ${process.env.APP_PATH}/verify-password/${message.emailVerify}
+      <a href="${process.env.APP_PATH}/verify-email/${message.emailVerify}" target="_blank">
+        ${process.env.APP_PATH}/verify-email/${message.emailVerify}
       </a><br><br>You can also copy and paste the link to your browser:<br>
-      ${process.env.APP_PATH}/verify-password/${message.emailVerify}`
+      ${process.env.APP_PATH}/verify-email/${message.emailVerify}`
       ;
   }
 }
