@@ -3,14 +3,15 @@ const _ = require('lodash');
 
 const { Session } = require('../models/session');
 
-const createSession = async (user) => {
-	if (!user.status) user.status = 'logged';
+const createSession = async (sessionObj) => {
+	if (!sessionObj.status) sessionObj.status = 'Logged';
 	const session = new Session({
-		user_id: user.user_id,
-		email: user.email,
-		token: user.token,
-		status: user.status
+		user_id: sessionObj._id,
+		email: sessionObj.email,
+		token: sessionObj.token,
+		status: sessionObj.status
 	});
+	
   try {
 		await session.save();
 	} catch(err) {
@@ -22,8 +23,11 @@ const updateSession = async (oldToken,refreshedToken,status) => {
 	try{
 		let session = await Session.findOne({ token: oldToken });
 		if (!session) throw `invalid token!`;
-		session.set({token: refreshedToken });
-		if (status) session.set({ status: status });
+		session.set({ token: refreshedToken, updatad_at: Date.now() });
+		if (status) {
+			session.set({ status: status });
+			if (status == 'Signed-out') session.set({ isValid: false});
+		}
 		await session.save();
 	} catch(err){
 		return err;

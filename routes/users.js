@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const _ =require('lodash');
 const bcrypt = require('bcrypt');
-const Joi = require('@hapi/joi');
+//const Joi = require('@hapi/joi');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 
@@ -12,19 +12,10 @@ const { User, userRegisterValidate, userLoginValidate, userRecoverValidate } = r
 const auth = require('../middleware/auth');
 
 const { cookieSetting } = require('../middleware/headersCookie.js');
-const { createSession } = require('../middleware/session');
+const { createSession, updateSession } = require('../middleware/session');
 
 //routes
-router.get('/me', auth, async (req, res) => {
-	try {
-		const user = await User.findById(req.user._id).select('-password');
-		console.log(user)
-		return res.send(user);
-	} catch (err) {
-		console.log(err);
-		return res.status(400).send({ message: `Error on server!`});
-	}
-});
+
 
 //user register signup
 router.post('/register', async (req,res) => {
@@ -44,7 +35,7 @@ router.post('/register', async (req,res) => {
 			await user.save();
 			await mailer(user.email,`Welcome to ${process.env.APP_NAME}`,user,'userRegisterTemplate')
 			const token = user.generateAuthToken();
-			//await createSession({...user, token});//!session to log
+			await createSession( {..._.pick(user, ['email', '_id']), token, status: 'Registered' }); //log_session
 			user = _.pick(user, ['name', 'email', '_id']);
 			return res.header('x-auth-token', token)
 						.cookie('x-auth-token', token, cookieSetting)
@@ -55,7 +46,7 @@ router.post('/register', async (req,res) => {
     
 });
 
-router.post('/recover-password', async (req,res) => {
+router.post('/recover-password', async (req, res) => {
 	//expected code&password
 	const { error } = userRecoverValidate(req.body);
 	if (error) return res.send({ message: `${error.details[0].message}` });
@@ -71,7 +62,7 @@ router.post('/recover-password', async (req,res) => {
 	try {
 		await user.save();
 		const token = user.generateAuthToken();
-		//await createSession({...user, token});//!session to log
+		await createSession( {..._.pick(user, ['email', '_id']), token, status: 'Recovered' }); //log_session
 		user = _.pick(user, ['name', 'email', '_id']);
 		return res.header('x-auth-token', token)
 					.cookie('x-auth-token', token, cookieSetting)
@@ -97,14 +88,11 @@ router.post('/login', async (req,res) => {
 	if (!user.isActive) return res.status(400).json({ message: 'Your account seems de-activated.' });
 
 	const token = user.generateAuthToken();
-	await createSession({user_id: user._id, email: user.email, token});//!session to log
+	await createSession( {..._.pick(user, ['email', '_id']), token }); //log_session
 	user = _.pick(user, ['name', 'email', '_id']);
 	return res.header('x-auth-token', token)
 						.cookie('x-auth-token', token, cookieSetting)
 						.send(user); 
-	
-	//!write in logins-collectoin (to database) for controlling sessions
-	
 });
 
 router.post('/forget-password', async (req,res) => {
@@ -127,16 +115,38 @@ router.get('/recover-password-verify-code/:code', async (req,res) => {
 });
 
 router.get('/verify-email/:code', async (req,res) => {
-	const code = req.params.code;
-	let user = await User.findOne({ emailVerify: code });
-	if (!user) return res.json({ response_type:`warning`, message: `The link seems invalid.`, });
-	user.set({ emailVerify: `true-${Date.now}` });
-	const result = await user.save();
-	console.log(result)
-	return res.json({ response_type:`success`, message: `ok` });
+	try{
+		const code = req.params.code;
+		const user = await User.findOne({ emailVerify: code });
+		if (!user) return res.json({ response_type:`warning`, message: `The link seems invalid.`, });
+		user.set({ emailVerify: `true-${Date.now}` });
+		await user.save();
+		return res.json({ response_type:`success`, message: `ok` });
+	} catch(err){
+		return res.json({ response_type:`warning`, message: `${err.message}` });
+	}
 });
 
-//Todo: add logout to the code
+router.get('/logout', async (req,res) => {
+	const token = req.cookies["x-auth-token"];
+	try {
+		await updateSession(token,'invalid-'+token,'Signed-out');
+		return res.clearCookie('x-auth-token').json({message: 'ok'}); //header('x-auth-token', '-')
+	} catch(err) {
+		return res.clearCookie('x-auth-token').json({message: err.message});
+	}
+});
+
+router.get('/me', auth, async (req, res) => {
+	try {
+		const user = await User.findById(req.user._id).select('-password');
+		console.log(user)
+		return res.send(user);
+	} catch (err) {
+		console.log(err);
+		return res.status(400).send({ message: `Error on server!`});
+	}
+});
 
 router.get('/@@@@@@refresh', async(req,res) => {
 	let token = req.header('x-auth-token');

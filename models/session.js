@@ -24,7 +24,7 @@ const sessionSchema = new mongoose.Schema({
 		default: Date.now
 	},
 	updatad_at:{ 
-		type: Date
+		type: Date,
 	},
 	status: { 
 		type: String,
