@@ -47,12 +47,13 @@ async function mailer(to,subject,message,template) {
   // Preview URL: https://ethereal.email/message/WaQKMgKddxQDoou...
 }
 
+const logoLiteral = `<span style="color: #6D9EEB; font-size:18px;" >
+chapar<span style="color: #6AA84F">.tech</span>
+</span>`;
 
 const useEmailTemplate = (message, template) => {
   if (template =='passwordRecoverTemplate' ){
-    return `<span style="color: #6D9EEB; font-size:18px;" >
-      chapar<span style="color: #6AA84F">.tech</span>
-      </span><br><br>
+    return `${logoLiteral}<br><br>
       Recovery Link:<br>Please use the following link to recover your password <br>
       <a href="${process.env.APP_PATH}/recover-password/${message}" target="_blank">
         ${process.env.APP_PATH}/recover-password/${message}
@@ -60,9 +61,7 @@ const useEmailTemplate = (message, template) => {
       ;
   }
   if (template =='userRegisterTemplate' ){
-    return `<span style="color: #6D9EEB; font-size:18px;" >
-      chapar<span style="color: #6AA84F">.tech</span>
-      </span><br><br>
+    return `${logoLiteral}<br><br>
       Dear ${message.name},<br>Welcome, thank you for registering at ${process.env.APP_PATH}, please verify your email address by click at the following link:<br>
       <a href="${process.env.APP_PATH}/verify-email/${message.emailVerify}" target="_blank">
         ${process.env.APP_PATH}/verify-email/${message.emailVerify}

@@ -12,7 +12,7 @@ const { User, userRegisterValidate, userLoginValidate, userRecoverValidate } = r
 const auth = require('../middleware/auth');
 
 const { cookieSetting } = require('../middleware/headersCookie.js');
-const createSession = require('../middleware/session');
+const { createSession } = require('../middleware/session');
 
 //routes
 router.get('/me', auth, async (req, res) => {
@@ -97,7 +97,7 @@ router.post('/login', async (req,res) => {
 	if (!user.isActive) return res.status(400).json({ message: 'Your account seems de-activated.' });
 
 	const token = user.generateAuthToken();
-	//await createSession({...user, token});//!session to log
+	await createSession({...user, token});//!session to log
 	user = _.pick(user, ['name', 'email', '_id']);
 	return res.header('x-auth-token', token)
 						.cookie('x-auth-token', token, cookieSetting)
@@ -129,10 +129,10 @@ router.get('/recover-password-verify-code/:code', async (req,res) => {
 router.get('/verify-email/:code', async (req,res) => {
 	const code = req.params.code;
 	let user = await User.findOne({ emailVerify: code });
-	if (!user) return res.json({ message: `The link seems invalid.` });
+	if (!user) return res.json({ response_type:`warning`, message: `The link seems invalid.`, });
 	user.set({ emailVerify: 'true'});
 	await user.save();
-	return res.json({ email: user.email, message: `ok` });
+	return res.json({ response_type:`success`, message: `ok` });
 });
 
 //Todo: add logout to the code

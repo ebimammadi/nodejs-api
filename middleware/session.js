@@ -4,8 +4,7 @@ const _ = require('lodash');
 const { Session } = require('../models/session');
 
 const createSession = async (user) => {
-	console.log(`here it is in createSession`)
-	if (!user.status) user.status = 'logged'
+	if (!user.status) user.status = 'logged';
 	const session = new Session({
 		user_id: user._id,
 		email: user.email,
@@ -13,8 +12,10 @@ const createSession = async (user) => {
 		status: user.status
   });
   try {
-		await session.save();
 		console.log(`here it is logged`)
+		console.log(session);
+		const result = await session.save();
+		console.log(`result`,result)
 	} catch(err) {
 		return err;
 	} 
@@ -32,5 +33,5 @@ const updateSession = async (oldToken,refreshedToken,status) => {
 	}
 }
 
-module.exports = createSession;
-module.exports = updateSession;
+exports.createSession = createSession;
+exports.updateSession = updateSession;

@@ -1,5 +1,4 @@
 const Joi = require('@hapi/joi');
-const _ = require('lodash');
 const mongoose = require('mongoose');
 
 //schema validate mongoose
@@ -34,16 +33,6 @@ const sessionSchema = new mongoose.Schema({
 });
 
 //model
-const Session = mongoose.model('Session', sessionSchema);
-
-const sessionValidate = (session) => {    
-	const schema = Joi.object({
-		user_id: Joi.string().required(),
-		email: Joi.string().email().required(),
-		token: Joi.string().email().required()
-	});
-	return schema.validate(session);
-};
+const Session = mongoose.model('log_session', sessionSchema);
 
 exports.Session = Session;
-exports.sessionValidate = sessionValidate;
