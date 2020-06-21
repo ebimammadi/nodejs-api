@@ -6,16 +6,13 @@ const { Session } = require('../models/session');
 const createSession = async (user) => {
 	if (!user.status) user.status = 'logged';
 	const session = new Session({
-		user_id: user._id,
+		user_id: user.user_id,
 		email: user.email,
 		token: user.token,
 		status: user.status
-  });
+	});
   try {
-		console.log(`here it is logged`)
-		console.log(session);
-		const result = await session.save();
-		console.log(`result`,result)
+		await session.save();
 	} catch(err) {
 		return err;
 	} 

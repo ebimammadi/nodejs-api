@@ -97,7 +97,7 @@ router.post('/login', async (req,res) => {
 	if (!user.isActive) return res.status(400).json({ message: 'Your account seems de-activated.' });
 
 	const token = user.generateAuthToken();
-	await createSession({...user, token});//!session to log
+	await createSession({user_id: user._id, email: user.email, token});//!session to log
 	user = _.pick(user, ['name', 'email', '_id']);
 	return res.header('x-auth-token', token)
 						.cookie('x-auth-token', token, cookieSetting)
@@ -130,8 +130,9 @@ router.get('/verify-email/:code', async (req,res) => {
 	const code = req.params.code;
 	let user = await User.findOne({ emailVerify: code });
 	if (!user) return res.json({ response_type:`warning`, message: `The link seems invalid.`, });
-	user.set({ emailVerify: 'true'});
-	await user.save();
+	user.set({ emailVerify: `true-${Date.now}` });
+	const result = await user.save();
+	console.log(result)
 	return res.json({ response_type:`success`, message: `ok` });
 });
 
