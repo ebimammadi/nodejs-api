@@ -22,13 +22,15 @@ const createSession = async (sessionObj) => {
 const updateSession = async (oldToken,refreshedToken,status) => {
 	try{
 		let session = await Session.findOne({ token: oldToken });
-		if (!session) throw `invalid token!`;
+		if (!session) return null;
+
 		session.set({ token: refreshedToken, updatad_at: Date.now() });
 		if (status) {
 			session.set({ status: status });
 			if (status == 'Signed-out') session.set({ isValid: false});
 		}
-		await session.save();
+		const result = await session.save();
+		return result
 	} catch(err){
 		return err;
 	}

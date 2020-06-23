@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema({
 		type: Boolean, 
 		default: true 
 	},
-	userType: { 
+	userRole: { 
 		type: String, 
 		enum: ['user','admin'],
 		default: 'user'  
@@ -43,12 +43,15 @@ const userSchema = new mongoose.Schema({
 	passwordRecoverCode: {
 		type: String, 
 		default: '-'
+	},
+	profilePhotoUrl: {
+		type: String
 	}
 });
 
 //generates a jwt token
 userSchema.methods.generateAuthToken = function() {
-	const payload = _.pick(this, ['email','name','_id','userType']);
+	const payload = _.pick(this, ['email','name','_id','userRole']);
 	payload.exp = Math.floor(Date.now() / 1000) + (parseFloat(process.env.JWT_EXP_HOUR) * 3600);
 	return token = jwt.sign( payload, process.env.JWT_KEY );
 }

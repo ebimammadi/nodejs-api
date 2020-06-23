@@ -13,6 +13,7 @@ const auth = require('../middleware/auth');
 
 const { cookieSetting } = require('../middleware/headersCookie.js');
 const { createSession, updateSession } = require('../middleware/session');
+const { binary } = require('@hapi/joi');
 
 //routes
 
@@ -121,7 +122,7 @@ router.get('/verify-email/:code', async (req,res) => {
 		if (!user) return res.json({ response_type:`warning`, message: `The link seems invalid.`, });
 		user.set({ emailVerify: `true-${Date.now}` });
 		await user.save();
-		return res.json({ response_type:`success`, message: `ok` });
+		return res.json({ response_type:`success`, message: `` });
 	} catch(err){
 		return res.json({ response_type:`warning`, message: `${err.message}` });
 	}
@@ -147,6 +148,20 @@ router.get('/me', auth, async (req, res) => {
 		return res.status(400).send({ message: `Error on server!`});
 	}
 });
+
+router.get('/get-profile-photo', auth, async (req, res) => {
+	//const file = { name: req.body.name, file: binary(req.body.files.uploadedFile.data) }
+	insertFile(file, res)
+});
+
+router.post('/set-profile-photo', auth, async (req, res) => {
+	const file = { name: req.body.name, file: binary(req.body.files.uploadedFile.data) }
+	insertFile(file, res)
+});
+
+function insertFile(file, res){
+	//mongo 
+}
 
 router.get('/@@@@@@refresh', async(req,res) => {
 	let token = req.header('x-auth-token');
