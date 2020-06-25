@@ -1,7 +1,10 @@
+#environment variables
 .env
 .vscode
 node_modules
-storage-files
+
+#the storage folder of files uploaded both for public and protected files
+file-storage 
 
 ssl/cert.pem
 ssl/key.pem
