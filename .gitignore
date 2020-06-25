@@ -1,6 +1,7 @@
 .env
 .vscode
 node_modules
+storage-files
 
 ssl/cert.pem
 ssl/key.pem
