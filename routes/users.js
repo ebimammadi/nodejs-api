@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const _ =require('lodash');
 const bcrypt = require('bcrypt');
-//const Joi = require('@hapi/joi');
+//const Joi = require('@hapi/joi');//!Depricated
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 
@@ -13,7 +13,7 @@ const auth = require('../middleware/auth');
 
 const { cookieSetting } = require('../middleware/headersCookie.js');
 const { createSession, updateSession } = require('../middleware/session');
-const { binary } = require('@hapi/joi');
+//const { binary } = require('@hapi/joi');
 
 //routes
 
@@ -138,67 +138,67 @@ router.get('/logout', async (req,res) => {
 	}
 });
 
-router.get('/me', auth, async (req, res) => {
-	try {
-		const user = await User.findById(req.user._id).select('-password');
-		console.log(user)
-		return res.send(user);
-	} catch (err) {
-		console.log(err);
-		return res.status(400).send({ message: `Error on server!`});
-	}
-});
+// router.get('/me', auth, async (req, res) => {
+// 	try {
+// 		const user = await User.findById(req.user._id).select('-password');
+// 		console.log(user)
+// 		return res.send(user);
+// 	} catch (err) {
+// 		console.log(err);
+// 		return res.status(400).send({ message: `Error on server!`});
+// 	}
+// });
 
-router.get('/get-profile-photo', auth, async (req, res) => {
-	//const file = { name: req.body.name, file: binary(req.body.files.uploadedFile.data) }
-	insertFile(file, res)
-});
+// router.get('/get-profile-photo', auth, async (req, res) => {
+// 	//const file = { name: req.body.name, file: binary(req.body.files.uploadedFile.data) }
+// 	insertFile(file, res)
+// });
 
-router.post('/set-profile-photo', auth, async (req, res) => {
-	const file = { name: req.body.name, file: binary(req.body.files.uploadedFile.data) }
-	insertFile(file, res)
-});
+// router.post('/set-profile-photo', auth, async (req, res) => {
+// 	const file = { name: req.body.name, file: binary(req.body.files.uploadedFile.data) }
+// 	insertFile(file, res)
+// });
 
-function insertFile(file, res){
-	//mongo 
-}
+// function insertFile(file, res){
+// 	//mongo 
+// }
 
-router.get('/@@@@@@refresh', async(req,res) => {
-	let token = req.header('x-auth-token');
-	let refresh_token = req.header('refresh-token');
-	if (!token || !refresh_token )
-		return res.status(400).send({ message: 'Tokens are not available!' });
+// router.get('/@@@@@@refresh', async(req,res) => {
+// 	let token = req.header('x-auth-token');
+// 	let refresh_token = req.header('refresh-token');
+// 	if (!token || !refresh_token )
+// 		return res.status(400).send({ message: 'Tokens are not available!' });
 	
-	const { email } = jwt.decode(token);
-	const { email:emailFromRefreshToken } = jwt.decode(refresh_token);
-	if ( email != emailFromRefreshToken)
-		return res.status(400).send({ message: 'Tokens mismatch!' });
+// 	const { email } = jwt.decode(token);
+// 	const { email:emailFromRefreshToken } = jwt.decode(refresh_token);
+// 	if ( email != emailFromRefreshToken)
+// 		return res.status(400).send({ message: 'Tokens mismatch!' });
 	
-	try{
+// 	try{
 		
-		let user = await User.findOne({ email: email });
-		if (!user) return res.status(400).json({ message: 'Invalid email or password.' });
+// 		let user = await User.findOne({ email: email });
+// 		if (!user) return res.status(400).json({ message: 'Invalid email or password.' });
 
-		const decoded_refresh = jwt.verify(refresh_token, process.env.REFRESH_KEY + user.password); 
-		const nowTimeStamp = Math.floor(Date.now()/1000);
+// 		const decoded_refresh = jwt.verify(refresh_token, process.env.REFRESH_KEY + user.password); 
+// 		const nowTimeStamp = Math.floor(Date.now()/1000);
 		
-		if (nowTimeStamp > decoded_refresh.exp){
-			res.status(400).send({ message: 'Refresh token expired'});
-		}
+// 		if (nowTimeStamp > decoded_refresh.exp){
+// 			res.status(400).send({ message: 'Refresh token expired'});
+// 		}
 		
-		token = user.generateAuthToken();
-	 	refresh_token = user.generateRefreshToken();
-		user = _.pick(user, ['name', 'email', '_id']);
-		return res.header('x-auth-token', token)
-							.header('refresh-token', refresh_token)
-							.send(user); 
+// 		token = user.generateAuthToken();
+// 	 	refresh_token = user.generateRefreshToken();
+// 		user = _.pick(user, ['name', 'email', '_id']);
+// 		return res.header('x-auth-token', token)
+// 							.header('refresh-token', refresh_token)
+// 							.send(user); 
 
-	} catch(err){
-		console.log(err);
-		return res.status(400).send({ message: `Error on server!`, ...err});
+// 	} catch(err){
+// 		console.log(err);
+// 		return res.status(400).send({ message: `Error on server!`, ...err});
 		
-	}
+// 	}
 	
-});
+// });
 
 module.exports = router;

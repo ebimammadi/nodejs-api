@@ -2,28 +2,45 @@ const express = require('express');
 const router = express.Router(); 
 const path = require('path');
 const fs = require('fs');
+const Joi = require('@hapi/joi');
 const mime = require('mime');
 const base64Img = require('base64-img');
 const jwt = require ('jsonwebtoken');
+const sha256 = require('js-sha256');
 
 const auth = require('../middleware/auth');
-//! upload sample
 
-router.post('/upload', (req, res) => {
-	const token = req.cookies["x-auth-token"];
-	const { _id } = jwt.verify(token, process.env.JWT_KEY);
-	//const _id = new User(_.pick( decodedToken, ['name','email','_id','userRole']));
-	const folder = process.env.UPLOAD_FOLDER + '/' + _id;
+router.post('/upload-image', auth, (req, res) => {
+	const { error } = validateImage(req.body);
+	if (error) return res.json( { response_type: 'error', message: `${error.details[0].message}`} );
+	
+	const { _id } = jwt.verify( req.cookies["x-auth-token"], process.env.JWT_KEY);
+	const hashedFolderName = sha256(_id);
+	const localFolderName = process.env.UPLOAD_FOLDER + '/' + hashedFolderName;
+	const localFileName = `${req.body.usage}-${Date.now()}`;
+	
+	//! const unique = req.body.unique; check if the 
+
 	const { image } = req.body;
-	base64Img.img(image, folder, Date.now(), function(err, filepath){
+	base64Img.img(image, localFolderName, localFileName, function(err, filepath){
 		const pathArr = filepath.split('/');
-		const filename = pathArr[pathArr.length-1];
+		const fileName = pathArr[pathArr.length-1];
 		res.status(200).json({
 			success: 'true',
-			url: `http://localhost:8080/${filename}`
+			url: `${process.env.API_PATH}/files/${hashedFolderName}/${fileName}`
 		})
-	})
+})
 });
+
+const validateImage = (image) => {	
+	const imageSchema = Joi.object({
+		usage: Joi.string().required().valid('profile','product','point','reciept'),
+		unique: Joi.string().valid('','true'),
+		image: Joi.string().required()
+	});
+	return imageSchema.validate(image);
+}
+
 //!file protections should be developed!!!
 //this part is for protected files 
 router.get('/p/:folderName/:fileName', auth, (req, res) => {
@@ -54,5 +71,7 @@ router.get('/:folderName/:fileName' , (req, res) => {
 		return res.send(`can't GET ${req.originalUrl}`);
 	}
 });
+
+
 
 module.exports = router;
