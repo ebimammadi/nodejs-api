@@ -2,12 +2,15 @@
 const config = require('dotenv/config'); //to read .env file
 const express = require('express');
 const app = express();
-const path = require('path');
+//const path = require('path');
 const helmet = require('helmet');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
+
+//Setting the port for the application
+const port = process.env.PORT || 8080;
 // const Joi = require('joi');//!depricated, instead hapi/joi
 // Joi.onjectId = require('joi-objectid')(Joi);
 
@@ -46,7 +49,6 @@ app.use('/about', homeRoutes);
 app.use('/courses', coursesRoutes);
 app.use('/users', usersRoute);
 app.use('/files', fileRoutes);
-//Setting the port for the application
-const port = process.env.PORT || 8080;
+
 console.log('---------------------------------------------------------------')
 app.listen(port,'localhost',() => console.log(`Listing on port ${port}...`) );
