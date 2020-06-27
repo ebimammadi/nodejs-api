@@ -2,13 +2,12 @@ const express = require('express');
 const router = express.Router(); 
 const path = require('path');
 const fs = require('fs');
-const util = require('util');
 const Joi = require('@hapi/joi');
 const mime = require('mime');
 const base64Img = require('base64-img');
 const jwt = require ('jsonwebtoken');
 const sha256 = require('js-sha256');
-const _ = require('lodash'); 
+//const _ = require('lodash'); 
 
 const { User } = require('../models/user');
 const auth = require('../middleware/auth');
