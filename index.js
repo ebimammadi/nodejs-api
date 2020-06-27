@@ -5,7 +5,7 @@ const app = express();
 const helmet = require('helmet');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
-const bodyParser = require('body-parser');
+//const bodyParser = require('body-parser'); //!it has been replaced with express.urlencoded!
 const mongoose = require('mongoose');
 
 //Setting the port for the application
