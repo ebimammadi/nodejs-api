@@ -120,7 +120,7 @@ router.get('/verify-email/:code', async (req,res) => {
 		const code = req.params.code;
 		const user = await User.findOne({ emailVerify: code });
 		if (!user) return res.json({ response_type:`warning`, message: `The link seems invalid.`, });
-		user.set({ emailVerify: `true-${Date.now}` });
+		user.set({ emailVerify: `true-${Date.now()}` });
 		await user.save();
 		return res.json({ response_type:`success`, message: `` });
 	} catch(err){
