@@ -23,10 +23,7 @@ router.post('/upload-image', auth, async(req, res) => {
 		let user = await User.findOne({ _id: token._id });
 		let profilePhotoUrl = user.profilePhotoUrl; 
 		//remove previous file
-		if (req.body.unique === 'true') {
-			console.log(`remove from storage`)
-			if (profilePhotoUrl) await removeFromStorage(profilePhotoUrl);
-		}
+		if (req.body.unique === 'true' && profilePhotoUrl ) await removeFromStorage(profilePhotoUrl);
 		//upload to storage
 		const uploadPath = await uploadToStorage( req.body.image, req.body.usage, folder);
 		//save to database

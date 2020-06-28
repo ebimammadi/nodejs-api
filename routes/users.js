@@ -3,8 +3,7 @@ const router = express.Router();
 const _ =require('lodash');
 const bcrypt = require('bcrypt');
 //const Joi = require('@hapi/joi');//!Depricated
-const jwt = require('jsonwebtoken');
-const { v4: uuidv4 } = require('uuid');//!
+//const jwt = require('jsonwebtoken');
 const sha256 = require('js-sha256');
 
 const mailer = require('../components/nodemailer');
@@ -14,8 +13,6 @@ const { User, userRegisterValidate, userLoginValidate, userRecoverValidate } = r
 
 const { cookieSetting } = require('../middleware/headersCookie.js');
 const { createSession, updateSession } = require('../middleware/session');
-//const { binary } = require('@hapi/joi');
-
 
 //user register signup
 router.post('/register', async (req,res) => {
@@ -45,7 +42,6 @@ router.post('/register', async (req,res) => {
     } 
     
 });
-
 router.post('/recover-password', async (req, res) => {
 	//expected code&password
 	const { error } = userRecoverValidate(req.body);
@@ -72,7 +68,6 @@ router.post('/recover-password', async (req, res) => {
 	} 
 	
 });
-
 //user login post
 router.post('/login', async (req,res) => {
 
@@ -97,29 +92,28 @@ router.post('/login', async (req,res) => {
 
 router.post('/forget-password', async (req,res) => {
 	if (!req.body.email) return res.status(400).send(`Invalid email`);
-	let user = await User.findOne({ email: req.body.email });
-	
-	if (!user) {
-		setTimeout( () => { return res.json({ message: `Invalid email` }); }, 5000 )
-	}else {
-		console.log('dadsad')
-		const uniqueID = sha256( user._id + Date.now()); //uuidv4()
-		user.set({ passwordRecoverCode: uniqueID});
-		await user.save();
-		
-		await mailer(req.body.email,'Recovery Link', uniqueID, 'passwordRecoverTemplate').catch(console.error);
-		const message = `Your request would be processed shortly. Please check your mailbox.`
-		return res.json({ response_type: 'success', message: message });
+	try{
+		let user = await User.findOne({ email: req.body.email });
+		if (!user) {
+			setTimeout( () => { return res.json({ message: `Invalid email` }); }, 5000 )
+		}else {
+			console.log('dadsad')
+			const uniqueID = sha256( user._id + Date.now());
+			user.set({ passwordRecoverCode: uniqueID});
+			await user.save();
+			await mailer(req.body.email,'Recovery Link', uniqueID, 'passwordRecoverTemplate').catch(console.error);
+			return res.json({ response_type: 'success', message: `Your request would be processed shortly. Please check your mailbox.` });
+		}
+	}catch(err){
+		return res.json({ response_type:`warning`, message: `${err.message}` });
 	}
 });
-
 router.get('/recover-password-verify-code/:code', async (req,res) => {
 	const code = req.params.code;
 	let user = await User.findOne({ passwordRecoverCode: code });
 	if (!user) return res.json({ message: `The link seems invalid.` });
-	return res.json({ email: user.email, message: `Set your new password.` });
+	return res.json({ email: user.email, resposnse_type: `success`, message: `Set your new password.` });
 });
-
 router.get('/verify-email/:code', async (req,res) => {
 	try{
 		const code = req.params.code;//! validatation required
@@ -154,20 +148,6 @@ router.get('/logout', async (req,res) => {
 // 		return res.status(400).send({ message: `Error on server!`});
 // 	}
 // });
-
-// router.get('/get-profile-photo', auth, async (req, res) => {
-// 	//const file = { name: req.body.name, file: binary(req.body.files.uploadedFile.data) }
-// 	insertFile(file, res)
-// });
-
-// router.post('/set-profile-photo', auth, async (req, res) => {
-// 	const file = { name: req.body.name, file: binary(req.body.files.uploadedFile.data) }
-// 	insertFile(file, res)
-// });
-
-// function insertFile(file, res){
-// 	//mongo 
-// }
 
 // router.get('/@@@@@@refresh', async(req,res) => {
 // 	let token = req.header('x-auth-token');
