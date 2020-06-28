@@ -4,18 +4,17 @@ const _ =require('lodash');
 const bcrypt = require('bcrypt');
 //const Joi = require('@hapi/joi');//!Depricated
 const jwt = require('jsonwebtoken');
-const { v4: uuidv4 } = require('uuid');
+const { v4: uuidv4 } = require('uuid');//!
+const sha256 = require('js-sha256');
 
 const mailer = require('../components/nodemailer');
 const { User, userRegisterValidate, userLoginValidate, userRecoverValidate } = require('../models/user');
 
-const auth = require('../middleware/auth');
+//! const auth = require('../middleware/auth'); not used yet
 
 const { cookieSetting } = require('../middleware/headersCookie.js');
 const { createSession, updateSession } = require('../middleware/session');
 //const { binary } = require('@hapi/joi');
-
-//routes
 
 
 //user register signup
@@ -24,15 +23,15 @@ router.post('/register', async (req,res) => {
     if (error) return res.status(400).send({ message: `${error.details[0].message}` });
     //password required to be checked seperately
     if (!req.body.password) return res.status(400).send({ message:`Password is required.` });
-    
-    let user = await User.findOne({ email: req.body.email });
-    if (user) return res.status(400).json({ message: `User already registered.` });
+		
+		try {
+			let user = await User.findOne({ email: req.body.email });
+			if (user) return res.status(400).json({ message: `User already registered.` });
 
-    user = new User(_.pick(req.body, ['name','email','password']));
-		user.password = await bcrypt.hash(user.password, await bcrypt.genSalt(10));
-		user.emailVerify = uuidv4();
+			user = new User(_.pick(req.body, ['name','email','password']));
+			user.password = await bcrypt.hash(user.password, await bcrypt.genSalt(10));
+			user.emailVerify = sha256( user._id + Date.now()); //uuidv4();
 
-    try {
 			await user.save();
 			await mailer(user.email,`Welcome to ${process.env.APP_NAME}`,user,'userRegisterTemplate')
 			const token = user.generateAuthToken();
@@ -54,13 +53,13 @@ router.post('/recover-password', async (req, res) => {
 	//password required to be checked seperately
 	if (!req.body.password) return res.status(400).json({ message:`Password is required.` });
 	
-	let user = await User.findOne({ passwordRecoverCode: req.body.code });
-	if (!user) return res.json({ message: `Recovery code is invalid.` });
-
-	const password = await bcrypt.hash(req.body.password, await bcrypt.genSalt(10));
-	user.set({password: password ,passwordRecoverCode: '-' });
-
 	try {
+		let user = await User.findOne({ passwordRecoverCode: req.body.code });
+		if (!user) return res.json({ message: `Recovery code is invalid.` });
+
+		const password = await bcrypt.hash(req.body.password, await bcrypt.genSalt(10));
+		user.set({password: password ,passwordRecoverCode: '-' });
+	
 		await user.save();
 		const token = user.generateAuthToken();
 		await createSession( {..._.pick(user, ['email', '_id']), token, status: 'Recovered' }); //log_session
@@ -99,13 +98,19 @@ router.post('/login', async (req,res) => {
 router.post('/forget-password', async (req,res) => {
 	if (!req.body.email) return res.status(400).send(`Invalid email`);
 	let user = await User.findOne({ email: req.body.email });
-	const message = `Your request would be processed shortly. Please check your mailbox.`
-	if (!user) return res.status(400).json({ message });
-	const uniqueID = uuidv4()
-	user.set({ passwordRecoverCode: uniqueID});
-	await user.save();
-	await mailer(req.body.email,'Recovery Link', uniqueID, 'passwordRecoverTemplate').catch(console.error)
-	return res.json({ message: message+'!' });
+	
+	if (!user) {
+		setTimeout( () => { return res.json({ message: `Invalid email` }); }, 5000 )
+	}else {
+		console.log('dadsad')
+		const uniqueID = sha256( user._id + Date.now()); //uuidv4()
+		user.set({ passwordRecoverCode: uniqueID});
+		await user.save();
+		
+		await mailer(req.body.email,'Recovery Link', uniqueID, 'passwordRecoverTemplate').catch(console.error);
+		const message = `Your request would be processed shortly. Please check your mailbox.`
+		return res.json({ response_type: 'success', message: message });
+	}
 });
 
 router.get('/recover-password-verify-code/:code', async (req,res) => {
@@ -117,10 +122,11 @@ router.get('/recover-password-verify-code/:code', async (req,res) => {
 
 router.get('/verify-email/:code', async (req,res) => {
 	try{
-		const code = req.params.code;
+		const code = req.params.code;//! validatation required
 		const user = await User.findOne({ emailVerify: code });
 		if (!user) return res.json({ response_type:`warning`, message: `The link seems invalid.`, });
-		user.set({ emailVerify: `true-${Date.now()}` });
+		const utcNow = () => { const now = new Date(); return now.toISOString(); }
+		user.set({ emailVerify: `true-${utcNow()}` });
 		await user.save();
 		return res.json({ response_type:`success`, message: `` });
 	} catch(err){

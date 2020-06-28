@@ -1,8 +1,8 @@
+const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const Joi = require('@hapi/joi');
 const passwordComplexity = require('joi-password-complexity');
 const _ = require('lodash');
-const mongoose = require('mongoose');
 
 //schema validate mongoose
 const userSchema = new mongoose.Schema({
@@ -101,6 +101,7 @@ const userRecoverValidate = (user) => {
 	});
 	return schema.validate(user);
 };
+
 exports.User = User;
 exports.userRegisterValidate = userRegisterValidate;
 exports.userLoginValidate = userLoginValidate;
