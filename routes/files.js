@@ -11,8 +11,6 @@ const { User } = require('../models/user');
 const auth = require('../middleware/auth');
 
 //!file protections should be developed!!!
-
-
 router.post('/upload-image', auth, async(req, res) => {
 	const { error } = validateImage(req.body);
 	if (error) return res.json({ response_type: 'error', message: `${error.details[0].message}` });
@@ -94,6 +92,7 @@ router.get('/:folder/:file' , (req, res) => {
 	}
 });
 
+
 const removeFromStorage = (file) => {
 	const path = process.env.UPLOAD_FOLDER + file;
 	return new Promise ( (resolve, reject) => {
@@ -107,7 +106,6 @@ const removeFromStorage = (file) => {
 		}	
 	});
 };
-
 const uploadToStorage = (image, usage, folder) => {
 	const folderName = process.env.UPLOAD_FOLDER + '/' + folder;
 	const fileName = `${usage}-${Date.now()}`;
@@ -119,7 +117,6 @@ const uploadToStorage = (image, usage, folder) => {
 		});
 	})
 };
-
 const generateEncodedFolderName = (usage, _id) => {
 	return Buffer.from(usage+'-'+_id).toString('hex') //!encode base64
 	//revernse Buffer.from(hexEncoded, 'base64').toString()
@@ -127,8 +124,7 @@ const generateEncodedFolderName = (usage, _id) => {
 const generateDecodedFolderName = (foldername) => {
 	const [ usage, _id ] = Buffer.from(foldername, 'hex').toString().split('-');
 	return { usage, _id };
-}
-
+};
 const validateImage = (image) => {	
 	const imageSchema = Joi.object({
 		usage: Joi.string().required().valid('profile','product','point','reciept'),
@@ -137,10 +133,7 @@ const validateImage = (image) => {
 	});
 	return imageSchema.validate(image);
 };
-
 const absolutePath = pathFile => path.dirname(require.main.filename) + '/' + process.env.UPLOAD_FOLDER + pathFile;
-
-
 const validPrefixes = ['profile','product','point','reciept'];
 
 module.exports = router;
