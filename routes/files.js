@@ -108,7 +108,8 @@ const removeFromStorage = (file) => {
 };
 const uploadToStorage = (image, usage, folder) => {
 	const folderName = process.env.UPLOAD_FOLDER + '/' + folder;
-	const fileName = `${usage}-${Date.now()}`;
+	// const fileName = `${usage}-${Date.now()}`;Buffer.from(usage+'-'+_id).toString('hex')
+	const fileName = usage + '-' + Buffer.from(Date.now()+'').toString('hex');
 	return new Promise( (resolve,reject) => {
 		base64Img.img(image, folderName, fileName, function(err, filepath){
 			const pathArr = filepath.split('/');
