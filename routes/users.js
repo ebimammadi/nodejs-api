@@ -3,18 +3,16 @@ const router = express.Router();
 const _ =require('lodash');
 const bcrypt = require('bcrypt');
 //const Joi = require('@hapi/joi');//!Depricated
-//const jwt = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 const sha256 = require('js-sha256');
 
 const mailer = require('../components/nodemailer');
 const { User, userRegisterValidate, userLoginValidate, userRecoverValidate } = require('../models/user');
-
-//! const auth = require('../middleware/auth'); not used yet
+const auth = require('../middleware/auth');
 
 const { cookieSetting } = require('../middleware/headersCookie.js');
 const { createSession, updateSession } = require('../middleware/session');
 
-//user register signup
 router.post('/register', async (req,res) => {
     const { error } = userRegisterValidate(req.body);
     if (error) return res.status(400).send({ message: `${error.details[0].message}` });
@@ -42,6 +40,27 @@ router.post('/register', async (req,res) => {
     } 
     
 });
+//user login post
+router.post('/login', async (req,res) => {
+
+	const { error } = userLoginValidate(req.body);
+	if (error) return res.status(400).send(`validationError: ${error.details[0].message}`)
+	
+	let user = await User.findOne({ email: req.body.email });
+	if (!user) return res.status(400).json({ message: 'Invalid email or password.' });
+
+	const validPassword = await bcrypt.compare(req.body.password, user.password);
+	if (!validPassword) return res.status(400).json({ message: 'Invalid email or password.' });
+
+	if (!user.isActive) return res.status(400).json({ message: 'Your account seems de-activated.' });
+
+	const token = user.generateAuthToken();
+	await createSession( {..._.pick(user, ['email', '_id']), token }); //log_session
+	user = _.pick(user, ['name', 'email', '_id']);
+	return res.header('x-auth-token', token)
+						.cookie('x-auth-token', token, cookieSetting)
+						.send(user); 
+});
 router.post('/recover-password', async (req, res) => {
 	//expected code&password
 	const { error } = userRecoverValidate(req.body);
@@ -67,27 +86,6 @@ router.post('/recover-password', async (req, res) => {
 		return res.status(400).send(err.message);
 	} 
 	
-});
-//user login post
-router.post('/login', async (req,res) => {
-
-	const { error } = userLoginValidate(req.body);
-	if (error) return res.status(400).send(`validationError: ${error.details[0].message}`)
-	
-	let user = await User.findOne({ email: req.body.email });
-	if (!user) return res.status(400).json({ message: 'Invalid email or password.' });
-
-	const validPassword = await bcrypt.compare(req.body.password, user.password);
-	if (!validPassword) return res.status(400).json({ message: 'Invalid email or password.' });
-
-	if (!user.isActive) return res.status(400).json({ message: 'Your account seems de-activated.' });
-
-	const token = user.generateAuthToken();
-	await createSession( {..._.pick(user, ['email', '_id']), token }); //log_session
-	user = _.pick(user, ['name', 'email', '_id']);
-	return res.header('x-auth-token', token)
-						.cookie('x-auth-token', token, cookieSetting)
-						.send(user); 
 });
 
 router.post('/forget-password', async (req,res) => {
@@ -141,7 +139,7 @@ router.get('/logout', async (req,res) => {
 router.get('/profile-get', auth, async (req, res) => {
 	try {
 		const { _id } = jwt.verify(req.cookies["x-auth-token"], process.env.JWT_KEY);
-		const user = await User.findById(_id).select('-password-emailVerify-passwordRecoverCode-date');
+		const user = await User.findById(_id).select('-_id -__v -password -emailVerify -passwordRecoverCode -date');
 		return res.send(user);
 	} catch (err) {
 		console.log(err);
