@@ -138,6 +138,17 @@ router.get('/logout', async (req,res) => {
 	}
 });
 
+router.get('/profile-get', auth, async (req, res) => {
+	try {
+		const { _id } = jwt.verify(req.cookies["x-auth-token"], process.env.JWT_KEY);
+		const user = await User.findById(_id).select('-password-emailVerify-passwordRecoverCode-date');
+		return res.send(user);
+	} catch (err) {
+		console.log(err);
+		return res.send({ response_type: 'warning', message: `Error on server!`});
+	}
+});
+
 // router.get('/me', auth, async (req, res) => {
 // 	try {
 // 		const user = await User.findById(req.user._id).select('-password');
