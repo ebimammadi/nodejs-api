@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router(); 
-const path = require('path');
 const fs = require('fs');
 const Joi = require('@hapi/joi');
 const mime = require('mime');
@@ -9,7 +8,7 @@ const jwt = require ('jsonwebtoken');
 
 const { User } = require('../models/user');
 const auth = require('../middleware/auth');
-
+const { urlPath, absolutePath } = require('../lib');
 //!file protections should be developed!!!
 router.post('/upload-image', auth, async(req, res) => {
 	const { error } = validateImage(req.body);
@@ -31,7 +30,7 @@ router.post('/upload-image', auth, async(req, res) => {
 		//return the result
 		res.status(200).json({
 			success: 'true',
-			url: `${process.env.API_PATH}/files${uploadPath}`
+			url: urlPath(uploadPath)//`${process.env.API_PATH}/files${uploadPath}`
 		});
 	}catch(err){
 		return res.json({ response_type: 'warning', message: err.message });
@@ -80,7 +79,9 @@ router.get('/p/:folder/:file', auth, (req, res) => {
 
 //public files
 router.get('/:folder/:file' , (req, res) => {
+	console.log('/' + req.params.folder + '/' + req.params.file)
 	const filename = absolutePath( '/' + req.params.folder + '/' + req.params.file);
+	console.log(filename);
 	try {   
 		if (fs.existsSync(filename)) {     
 			res.writeHead(200, {'Content-Type': mime.getType(filename)});      
@@ -134,7 +135,7 @@ const validateImage = (image) => {
 	});
 	return imageSchema.validate(image);
 };
-const absolutePath = filePath => path.dirname(require.main.filename) + '/' + process.env.UPLOAD_FOLDER + filePath;
+
 const validPrefixes = ['profile','product','point','reciept'];
 
 module.exports = router;
