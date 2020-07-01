@@ -4,6 +4,22 @@ const Joi = require('@hapi/joi');
 const passwordComplexity = require('joi-password-complexity');
 const _ = require('lodash');
 
+// trk : [{
+// 	lat : String,
+// 	lng : String
+// 	 }]
+
+const urlSchema = new mongoose.Schema({
+	urls: [{
+		name: {
+			type: String, 
+			unique: true,
+			enum: ['facebook','instagram','twitter','website','other']
+		},
+		url: String
+	}]
+})
+
 //schema validate mongoose
 const userSchema = new mongoose.Schema({
 	name: { 
@@ -46,7 +62,19 @@ const userSchema = new mongoose.Schema({
 	},
 	profilePhotoUrl: {
 		type: String
-	}
+	},
+	mobile: {
+		type: String
+	},
+	urls: [{
+		name: {
+			type: String, 
+			unique: true,
+			enum: ['facebook','instagram','twitter','website','other']
+		},
+		url: String
+	}]
+
 });
 
 //generates a jwt token
