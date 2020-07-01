@@ -1,3 +1,5 @@
+const path = require('path');
+
 //some custom functions
 const escapeText = (text) => {
 	return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
@@ -22,4 +24,7 @@ const validURL = str => {
   return !!pattern.test(str);
 };
 
-module.exports = { escapeText, factorial, regex, validURL };
+const absolutePath = filePath => path.dirname(require.main.filename) + '/' + process.env.UPLOAD_FOLDER + filePath;
+const urlPath = filePath => (filePath) ? process.env.API_PATH +'/files' + filePath : ''; //return '' if the file is empty
+
+module.exports = { escapeText, factorial, regex, validURL, absolutePath, urlPath };
