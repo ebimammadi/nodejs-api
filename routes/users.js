@@ -12,7 +12,7 @@ const auth = require('../middleware/auth');
 
 const { cookieSetting } = require('../middleware/headersCookie.js');
 const { createSession, updateSession } = require('../middleware/session');
-
+const { urlPath } = require('../lib');
 router.post('/register', async (req,res) => {
     const { error } = userRegisterValidate(req.body);
     if (error) return res.status(400).send({ message: `${error.details[0].message}` });
@@ -140,60 +140,12 @@ router.get('/profile-get', auth, async (req, res) => {
 	try {
 		const { _id } = jwt.verify(req.cookies["x-auth-token"], process.env.JWT_KEY);
 		const user = await User.findById(_id).select('-_id -__v -password -emailVerify -passwordRecoverCode -date');
+		user.profilePhotoUrl = urlPath(user.profilePhotoUrl); //add suffix path 
 		return res.send(user);
 	} catch (err) {
 		console.log(err);
 		return res.send({ response_type: 'warning', message: `Error on server!`});
 	}
 });
-
-// router.get('/me', auth, async (req, res) => {
-// 	try {
-// 		const user = await User.findById(req.user._id).select('-password');
-// 		console.log(user)
-// 		return res.send(user);
-// 	} catch (err) {
-// 		console.log(err);
-// 		return res.status(400).send({ message: `Error on server!`});
-// 	}
-// });
-
-// router.get('/@@@@@@refresh', async(req,res) => {
-// 	let token = req.header('x-auth-token');
-// 	let refresh_token = req.header('refresh-token');
-// 	if (!token || !refresh_token )
-// 		return res.status(400).send({ message: 'Tokens are not available!' });
-	
-// 	const { email } = jwt.decode(token);
-// 	const { email:emailFromRefreshToken } = jwt.decode(refresh_token);
-// 	if ( email != emailFromRefreshToken)
-// 		return res.status(400).send({ message: 'Tokens mismatch!' });
-	
-// 	try{
-		
-// 		let user = await User.findOne({ email: email });
-// 		if (!user) return res.status(400).json({ message: 'Invalid email or password.' });
-
-// 		const decoded_refresh = jwt.verify(refresh_token, process.env.REFRESH_KEY + user.password); 
-// 		const nowTimeStamp = Math.floor(Date.now()/1000);
-		
-// 		if (nowTimeStamp > decoded_refresh.exp){
-// 			res.status(400).send({ message: 'Refresh token expired'});
-// 		}
-		
-// 		token = user.generateAuthToken();
-// 	 	refresh_token = user.generateRefreshToken();
-// 		user = _.pick(user, ['name', 'email', '_id']);
-// 		return res.header('x-auth-token', token)
-// 							.header('refresh-token', refresh_token)
-// 							.send(user); 
-
-// 	} catch(err){
-// 		console.log(err);
-// 		return res.status(400).send({ message: `Error on server!`, ...err});
-		
-// 	}
-	
-// });
 
 module.exports = router;
