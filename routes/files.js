@@ -134,7 +134,7 @@ const validateImage = (image) => {
 	});
 	return imageSchema.validate(image);
 };
-const absolutePath = pathFile => path.dirname(require.main.filename) + '/' + process.env.UPLOAD_FOLDER + pathFile;
+const absolutePath = filePath => path.dirname(require.main.filename) + '/' + process.env.UPLOAD_FOLDER + filePath;
 const validPrefixes = ['profile','product','point','reciept'];
 
 module.exports = router;
