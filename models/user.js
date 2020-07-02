@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const Joi = require('@hapi/joi');
 const passwordComplexity = require('joi-password-complexity');
 const _ = require('lodash');
+const { urlRegexPattern } = require('../lib');
 
 // trk : [{
 // 	lat : String,
@@ -137,7 +138,20 @@ const userRecoverValidate = (user) => {
 	return schema.validate(user);
 };
 
+const userProfileValidate = (user) => {
+	const schema = Joi.object({
+		name: Joi.string().required().min(5),
+		urls: {
+			website: Joi.string().allow('').regex(urlRegexPattern),
+			facebook: Joi.string().allow('').regex(urlRegexPattern),
+			instagram: Joi.string().allow('').regex(urlRegexPattern),
+		}
+	});
+	return schema.validate(user);
+};
+
 exports.User = User;
 exports.userRegisterValidate = userRegisterValidate;
 exports.userLoginValidate = userLoginValidate;
 exports.userRecoverValidate = userRecoverValidate;
+exports.userProfileValidate = userProfileValidate;
