@@ -7,7 +7,7 @@ const jwt = require('jsonwebtoken');
 const sha256 = require('js-sha256');
 
 const mailer = require('../components/nodemailer');
-const { User, userRegisterValidate, userLoginValidate, userRecoverValidate } = require('../models/user');
+const { User, userRegisterValidate, userLoginValidate, userRecoverValidate, userProfileValidate } = require('../models/user');
 const auth = require('../middleware/auth');
 
 const { cookieSetting } = require('../middleware/headersCookie.js');
@@ -144,8 +144,26 @@ router.get('/profile-get', auth, async (req, res) => {
 		user.profilePhotoUrl = urlPath(user.profilePhotoUrl); //add suffix path 
 		user.emailVerify = user.emailVerify.startsWith('true') ;
 		user.mobileVerify = user.mobileVerify.startsWith('true');
-		user.urls = user.urls.length>0 ? user.urls : { facebook: '', instagram: '', website: '' };
+		//user.urls = user.urls.length>0 ? user.urls : { facebook: '', instagram: '', website: '' };
 		return res.send(user);
+	} catch (err) {
+		console.log(err);
+		return res.send({ response_type: 'warning', message: `Error on server!`});
+	}
+});
+
+router.post('/profile-set', auth, async (req, res) => {
+	try {
+		console.log(req.body)
+		const { error } = userProfileValidate(req.body);
+		if (error) return res.send({ message: `${error.details[0].message}` });
+		//validate name and urls
+		
+		const { _id } = jwt.verify(req.cookies["x-auth-token"], process.env.JWT_KEY);
+		const user = await User.findById(_id);
+		user.set({ name: req.body.name, urls: req.body.urls });
+		await user.save();
+		return res.send({ response_type: 'success', message: `Profile Updated.` });//user);
 	} catch (err) {
 		console.log(err);
 		return res.send({ response_type: 'warning', message: `Error on server!`});
