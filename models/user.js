@@ -66,14 +66,21 @@ const userSchema = new mongoose.Schema({
 	mobile: {
 		type: String
 	},
-	urls: [{
-		name: {
-			type: String, 
-			unique: true,
-			enum: ['facebook','instagram','twitter','website','other']
-		},
-		url: String
-	}]
+	mobileVerify: {
+		type: String, 
+		default: 'false'
+	},
+	urls: {
+		facebook: { type: String },
+		instagram: { type: String },
+		website: { type: String }
+		// name: {
+		// 	type: String, 
+		// 	unique: true,
+		// 	enum: ['facebook','instagram','twitter','website','other']
+		// },
+		// url: String
+	}
 
 });
 

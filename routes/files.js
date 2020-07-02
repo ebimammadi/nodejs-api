@@ -79,9 +79,7 @@ router.get('/p/:folder/:file', auth, (req, res) => {
 
 //public files
 router.get('/:folder/:file' , (req, res) => {
-	console.log('/' + req.params.folder + '/' + req.params.file)
 	const filename = absolutePath( '/' + req.params.folder + '/' + req.params.file);
-	console.log(filename);
 	try {   
 		if (fs.existsSync(filename)) {     
 			res.writeHead(200, {'Content-Type': mime.getType(filename)});      
@@ -99,10 +97,8 @@ const removeFromStorage = (file) => {
 	return new Promise ( (resolve, reject) => {
 		try {
 			if (fs.existsSync(path)) fs.unlinkSync(path);
-			else console.error(`file ${path} does not exist`)
 			resolve('deleted');
 		} catch(err) {
-			console.error(err);
 			reject(err);
 		}	
 	});

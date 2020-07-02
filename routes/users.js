@@ -13,6 +13,7 @@ const auth = require('../middleware/auth');
 const { cookieSetting } = require('../middleware/headersCookie.js');
 const { createSession, updateSession } = require('../middleware/session');
 const { urlPath } = require('../lib');
+
 router.post('/register', async (req,res) => {
     const { error } = userRegisterValidate(req.body);
     if (error) return res.status(400).send({ message: `${error.details[0].message}` });
@@ -139,8 +140,11 @@ router.get('/logout', async (req,res) => {
 router.get('/profile-get', auth, async (req, res) => {
 	try {
 		const { _id } = jwt.verify(req.cookies["x-auth-token"], process.env.JWT_KEY);
-		const user = await User.findById(_id).select('-_id -__v -password -emailVerify -passwordRecoverCode -date');
+		const user = await User.findById(_id).select('-_id -__v -password -passwordRecoverCode -date');
 		user.profilePhotoUrl = urlPath(user.profilePhotoUrl); //add suffix path 
+		user.emailVerify = user.emailVerify.startsWith('true') ;
+		user.mobileVerify = user.mobileVerify.startsWith('true');
+		user.urls = user.urls.length>0 ? user.urls : { facebook: '', instagram: '', website: '' };
 		return res.send(user);
 	} catch (err) {
 		console.log(err);
