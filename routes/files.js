@@ -12,7 +12,7 @@ const { urlPath, absolutePath } = require('../lib');
 //!file protections should be developed!!!
 router.post('/upload-image', auth, async(req, res) => {
 	const { error } = validateImage(req.body);
-	if (error) return res.json({ response_type: 'error', message: `${error.details[0].message}` });
+	if (error) return res.json({ response_type: 'danger', message: `${error.details[0].message}` });
 	try{
 		//generate-folder
 		const { _id } = jwt.verify( req.cookies["x-auth-token"], process.env.JWT_KEY);

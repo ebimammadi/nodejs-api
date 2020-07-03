@@ -23,8 +23,7 @@ router.get('/', auth, async (req,res) => {
   }
 
   const { error } = validate(input);
-  if (error) return res.status(400).send(`validationError: ${error.details[0].message}`)
-  
+  if (error) return res.json({ message: error.details[0].message });
   const courses = await Course.find(query);
   return res.send(courses);
 });

@@ -16,7 +16,7 @@ const { urlPath } = require('../lib');
 
 router.post('/register', async (req,res) => {
     const { error } = userRegisterValidate(req.body);
-    if (error) return res.status(400).send({ message: `${error.details[0].message}` });
+    if (error) return res.json({ message: error.details[0].message });
     //password required to be checked seperately
     if (!req.body.password) return res.status(400).send({ message:`Password is required.` });
 		
@@ -45,7 +45,7 @@ router.post('/register', async (req,res) => {
 router.post('/login', async (req,res) => {
 
 	const { error } = userLoginValidate(req.body);
-	if (error) return res.status(400).send(`validationError: ${error.details[0].message}`)
+	if (error) return res.status(400).json({ message: error.details[0].message });
 	
 	let user = await User.findOne({ email: req.body.email });
 	if (!user) return res.status(400).json({ message: 'Invalid email or password.' });
@@ -65,7 +65,7 @@ router.post('/login', async (req,res) => {
 router.post('/recover-password', async (req, res) => {
 	//expected code&password
 	const { error } = userRecoverValidate(req.body);
-	if (error) return res.send({ message: `${error.details[0].message}` });
+	if (error) return res.json({ message: error.details[0].message });
 	//password required to be checked seperately
 	if (!req.body.password) return res.status(400).json({ message:`Password is required.` });
 	
@@ -156,7 +156,7 @@ router.post('/profile-set', auth, async (req, res) => {
 	try {
 		console.log(req.body)
 		const { error } = userProfileValidate(req.body);
-		if (error) return res.send({ message: `${error.details[0].message}` });
+		if (error) return res.json({ message: error.details[0].message });
 		//validate name and urls
 		
 		const { _id } = jwt.verify(req.cookies["x-auth-token"], process.env.JWT_KEY);
