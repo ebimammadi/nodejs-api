@@ -144,7 +144,7 @@ router.get('/profile-get', auth, async (req, res) => {
 		user.profilePhotoUrl = urlPath(user.profilePhotoUrl); //add suffix path 
 		user.emailVerify = user.emailVerify.startsWith('true') ;
 		user.mobileVerify = user.mobileVerify.startsWith('true');
-		//user.urls = user.urls.length>0 ? user.urls : { facebook: '', instagram: '', website: '' };
+		if (user.urls.facebook === undefined) user.urls = { facebook: '', instagram: '', website: '' };
 		return res.send(user);
 	} catch (err) {
 		console.log(err);
@@ -154,10 +154,8 @@ router.get('/profile-get', auth, async (req, res) => {
 
 router.post('/profile-set', auth, async (req, res) => {
 	try {
-		console.log(req.body)
 		const { error } = userProfileValidate(req.body);
 		if (error) return res.json({ message: error.details[0].message });
-		//validate name and urls
 		
 		const { _id } = jwt.verify(req.cookies["x-auth-token"], process.env.JWT_KEY);
 		const user = await User.findById(_id);
