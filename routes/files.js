@@ -51,7 +51,7 @@ router.get('/delete-image/:folder/:file', auth, async(req, res) => {
 		const pathFile = absolutePath( profilePhotoUrl ) ;
 		//3. delete file from server
 		if (fs.existsSync(pathFile)) fs.unlinkSync(pathFile);
-		//4. update filename
+		//4. update filename in db
 		user.set({ profilePhotoUrl: '' });
 		await user.save();	
 		//5. return
