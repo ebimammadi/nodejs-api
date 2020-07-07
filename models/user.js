@@ -129,8 +129,8 @@ const userProfileValidate = (user) => {
 
 const userEmailValidate = (user) => {
 	const schema = Joi.object({
-		email: Joi.string().email().required().min(5).max(255),
-		password: Joi.string().required().min(5).max(255)
+		newEemail: Joi.string().email().required().min(5).max(255),
+		currentPassword: Joi.string().required().min(5).max(255)
 	});
 	return schema.validate(user);
 };
