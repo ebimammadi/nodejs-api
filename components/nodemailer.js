@@ -69,6 +69,20 @@ const useEmailTemplate = (message, template) => {
       ${process.env.APP_PATH}/verify-email/${message.emailVerify}`
       ;
   }
+  if (template =='emailChangeWarningTemplate' ){
+    return `${logoLiteral}<br><br>
+      Dear ${message.name},<br>Your user email has been changed at ${process.env.APP_PATH}, If you did not send this request, please contact our support. Otherwise you can ignore this email.<br>`
+      ;
+  }
+  if (template =='emailChangeVerifyTemplate' ){
+    return `${logoLiteral}<br><br>
+      Dear ${message.name},<br>This email has been set as your new email account at ${process.env.APP_PATH}, please verify your email address by click at the following link:<br>
+      <a href="${process.env.APP_PATH}/verify-email/${message.emailVerify}" target="_blank">
+        ${process.env.APP_PATH}/verify-email/${message.emailVerify}
+      </a><br><br>You can also copy and paste the link to your browser:<br>
+      ${process.env.APP_PATH}/verify-email/${message.emailVerify}`
+      ;
+  }
 }
 
 module.exports = mailer;
