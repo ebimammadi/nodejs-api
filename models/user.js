@@ -127,8 +127,19 @@ const userProfileValidate = (user) => {
 	return schema.validate(user);
 };
 
+const userEmailValidate = (user) => {
+	const schema = Joi.object({
+		email: Joi.string().email().required().min(5).max(255),
+		password: Joi.string().required().min(5).max(255)
+	});
+	return schema.validate(user);
+};
+
 exports.User = User;
-exports.userRegisterValidate = userRegisterValidate;
-exports.userLoginValidate = userLoginValidate;
-exports.userRecoverValidate = userRecoverValidate;
-exports.userProfileValidate = userProfileValidate;
+exports.validateUser = { 
+	register: userRecoverValidate,
+	login: userLoginValidate,
+	recover: userRecoverValidate,
+	profile: userProfileValidate,
+	email: userEmailValidate
+};
