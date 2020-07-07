@@ -7,7 +7,7 @@ const jwt = require('jsonwebtoken');
 const sha256 = require('js-sha256');
 
 const mailer = require('../components/nodemailer');
-const { User, userRegisterValidate, userLoginValidate, userRecoverValidate, userProfileValidate } = require('../models/user');
+const { User, validateUser } = require('../models/user');
 const auth = require('../middleware/auth');
 
 const { cookieSetting } = require('../middleware/headersCookie.js');
@@ -15,7 +15,7 @@ const { createSession, updateSession } = require('../middleware/session');
 const { urlPath } = require('../lib');
 
 router.post('/register', async (req,res) => {
-    const { error } = userRegisterValidate(req.body);
+    const { error } = validate.register(req.body);
     if (error) return res.json({ message: error.details[0].message });
     //password required to be checked seperately
     if (!req.body.password) return res.status(400).send({ message:`Password is required.` });
@@ -44,7 +44,7 @@ router.post('/register', async (req,res) => {
 //user login post
 router.post('/login', async (req,res) => {
 
-	const { error } = userLoginValidate(req.body);
+	const { error } = validateUser.login(req.body);
 	if (error) return res.status(400).json({ message: error.details[0].message });
 	
 	let user = await User.findOne({ email: req.body.email });
@@ -64,7 +64,7 @@ router.post('/login', async (req,res) => {
 });
 router.post('/recover-password', async (req, res) => {
 	//expected code&password
-	const { error } = userRecoverValidate(req.body);
+	const { error } = validateUser.recover(req.body);
 	if (error) return res.json({ message: error.details[0].message });
 	//password required to be checked seperately
 	if (!req.body.password) return res.status(400).json({ message:`Password is required.` });
@@ -154,7 +154,7 @@ router.get('/profile-get', auth, async (req, res) => {
 
 router.post('/profile-set', auth, async (req, res) => {
 	try {
-		const { error } = userProfileValidate(req.body);
+		const { error } = validateUser.profile(req.body);
 		if (error) return res.json({ message: error.details[0].message });
 		
 		const { _id } = jwt.verify(req.cookies["x-auth-token"], process.env.JWT_KEY);
@@ -162,6 +162,38 @@ router.post('/profile-set', auth, async (req, res) => {
 		user.set({ name: req.body.name, urls: req.body.urls });
 		await user.save();
 		return res.send({ response_type: 'success', message: `Profile Updated.` });//user);
+	} catch (err) {
+		console.log(err);
+		return res.send({ response_type: 'warning', message: `Error on server!`});
+	}
+});
+
+router.post('/email-set', auth, async (req, res) => {
+	try {
+		const { error } = validateUser.email(req.body);
+		if (error) return res.json({ message: error.details[0].message });
+		
+		const newEmail = req.body.newEmail;
+		const { _id, email, name } = jwt.verify(req.cookies["x-auth-token"], process.env.JWT_KEY);
+		
+		if ( email == newEmail ) return res.json({ response_type: 'warning', message: `This email is in use.`});
+		
+		let user = await User.find( { email: email, password: req.body.currentPassword } );
+		if (!user) return res.status(400).json({ message: 'Invalid email.' });
+		const validPassword = await bcrypt.compare(req.body.currentPassword, user.password);
+		if (!validPassword) return res.status(400).json({ message: 'Invalid password.' });
+
+		const checkUser = await User.find( { email: newEmail, _id: { $ne: _id } } );
+		if (checkUser) return res.status(400).json({ response_type: 'warning', message: `This email is not in use.`});
+		//send warning notification to the previous email 
+		await mailer(email,'Warning! Email changed.', { name } , 'emailChangeWarningTemplate').catch(console.error);
+		//generate the verify link
+		user.emailVerify = sha256( user._id + Date.now()); //uuidv4();
+		user.email = newEmail;
+		await user.save();
+		await mailer(user.email,`Changed 'User Email' at ${process.env.APP_NAME}`,user,'emailChangeVerifyTemplate')
+		//send verify link for the new email 
+		res.send({ response_type: 'success', message: `Your email has been updated please check your mailbox for verification.` });//user);
 	} catch (err) {
 		console.log(err);
 		return res.send({ response_type: 'warning', message: `Error on server!`});
