@@ -15,8 +15,12 @@ const factorial = (n) => {
 };
 
 const validateURL = str => {
-  const pattern = urlRegexPattern;
-  return !!pattern.test(str);
+  try {
+    new URL(str);
+  } catch (_) {
+    return false;
+  }
+  return true;
 };
 
 const urlRegexPattern = new RegExp('^(https?:\\/\\/)?'+ // protocol
