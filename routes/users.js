@@ -140,12 +140,13 @@ router.get('/logout', async (req,res) => {
 router.get('/profile-get', auth, async (req, res) => {
 	try {
 		const { _id } = jwt.verify(req.cookies["x-auth-token"], process.env.JWT_KEY);
-		const user = await User.findById(_id).select('-_id -__v -password -passwordRecoverCode -date');
-		user.profilePhotoUrl = urlPath(user.profilePhotoUrl); //add suffix path 
-		user.emailVerify = user.emailVerify.startsWith('true') ;
-		user.mobileVerify = user.mobileVerify.startsWith('true');
-		if (user.urls.facebook === undefined) user.urls = { facebook: '', instagram: '', website: '' };
-		return res.send(user);
+		const user = await User.findById(_id);
+		const profile = _.pick( user, ["email", "name", "urls", "profilePhotoUrl" ] );
+		profile.profilePhotoUrl = urlPath(user.profilePhotoUrl); //add suffix path 
+		profile.emailVerify = user.emailVerify.startsWith('true') ;
+		profile.mobileVerify = user.mobileVerify.startsWith('true');
+		if (profile.urls.facebook === undefined) profile.urls = { facebook: '', instagram: '', website: '' };
+		return res.send( profile );
 	} catch (err) {
 		console.log(err);
 		return res.send({ response_type: 'warning', message: `Error on server!`});
@@ -173,27 +174,55 @@ router.post('/email-set', auth, async (req, res) => {
 		const { error } = validateUser.email(req.body);
 		if (error) return res.json({ message: error.details[0].message });
 		
-		const newEmail = req.body.newEmail;
 		const { _id, email, name } = jwt.verify(req.cookies["x-auth-token"], process.env.JWT_KEY);
+		const newEmail = req.body.newEmail;
+		if ( email == newEmail ) return res.json({ response_type: 'warning', message: `This is your current email.`});
 		
-		if ( email == newEmail ) return res.json({ response_type: 'warning', message: `This email is in use.`});
+		let user = await User.findById( _id );
+		if (!user) return res.json({ message: 'Error! Invalid email.' });
 		
-		let user = await User.find( { email: email, password: req.body.currentPassword } );
-		if (!user) return res.status(400).json({ message: 'Invalid email.' });
-		const validPassword = await bcrypt.compare(req.body.currentPassword, user.password);
-		if (!validPassword) return res.status(400).json({ message: 'Invalid password.' });
+		const validPassword = await bcrypt.compare(req.body.password, user.password);
+		if (!validPassword) return res.json({ message: 'Invalid password.' });
 
-		const checkUser = await User.find( { email: newEmail, _id: { $ne: _id } } );
-		if (checkUser) return res.status(400).json({ response_type: 'warning', message: `This email is not in use.`});
+		const checkUser = await User.find( { email: newEmail } );
+		if (checkUser.length>0) return res.json({ response_type: 'warning', message: `This email is in use.`});
+		
 		//send warning notification to the previous email 
 		await mailer(email,'Warning! Email changed.', { name } , 'emailChangeWarningTemplate').catch(console.error);
 		//generate the verify link
-		user.emailVerify = sha256( user._id + Date.now()); //uuidv4();
+		user.emailVerify = sha256( user._id + Date.now()); 
 		user.email = newEmail;
 		await user.save();
-		await mailer(user.email,`Changed 'User Email' at ${process.env.APP_NAME}`,user,'emailChangeVerifyTemplate')
 		//send verify link for the new email 
-		res.send({ response_type: 'success', message: `Your email has been updated please check your mailbox for verification.` });//user);
+		await mailer(user.email,`Changed 'User Email' at ${process.env.APP_NAME}`,user,'emailChangeVerifyTemplate')
+		return res.send({ response_type: 'success', message: `Your email has been updated, please check your mailbox for verification.` });
+	} catch (err) {
+		console.log(err);
+		return res.send({ response_type: 'warning', message: `Error on server!`});
+	}
+});
+
+router.post('/password-set', auth, async (req, res) => {
+	try {
+		if (!req.body.password) return res.json({ message: `Current password is required.` });
+		const { error } = validateUser.password(req.body);
+		if (error) return res.json({ message: error.details[0].message });
+		const { _id } = jwt.verify(req.cookies["x-auth-token"], process.env.JWT_KEY);
+		let user = await User.findById( _id );
+		if (!user) return res.json({ message: `Error! Invalid password!` });
+		
+		const validPassword = await bcrypt.compare(req.body.password, user.password);
+		if (!validPassword) return res.json({ message: `Invalid password.` });
+
+		const password = await bcrypt.hash(req.body.newPassword, await bcrypt.genSalt(10));
+		user.set({ password });
+		await user.save();
+
+		//! expire other sessions which are signed in and active
+
+		//send verify link for the new email 
+		await mailer(user.email,`Change password notice at ${process.env.APP_NAME}`,user,'passwordChangeTemplate')
+		return res.send({ response_type: 'success', message: `Your password has been changed successfully.` });
 	} catch (err) {
 		console.log(err);
 		return res.send({ response_type: 'warning', message: `Error on server!`});
