@@ -69,6 +69,17 @@ userSchema.methods.generateAuthToken = function() {
 	return token = jwt.sign( payload, process.env.JWT_KEY );
 }
 
+const passwordComplexityOptions = {
+	required: true,
+	min: 8,
+	max: 255,
+	lowerCase: 1,
+	upperCase: 1,
+	numeric: 1,
+	symbol: 1,
+	requirementCount: 4
+}
+
 //model
 const User = mongoose.model('User', userSchema);
 
@@ -76,16 +87,7 @@ const userRegisterValidate = (user) => {
 	const schema = Joi.object({
 		name: Joi.string().required().min(5).max(255),
 		email: Joi.string().email().required().min(5).max(255),
-		password: passwordComplexity({
-			required: true,
-			min: 8,
-			max: 255,
-			lowerCase: 1,
-			upperCase: 1,
-			numeric: 1,
-			symbol: 1,
-			requirementCount: 4
-		})
+		password: passwordComplexity( passwordComplexityOptions )
 	});
 	return schema.validate(user);
 };
@@ -101,16 +103,7 @@ const userLoginValidate = (user) => {
 const userRecoverValidate = (user) => {    
 	const schema = Joi.object({
 		code: Joi.string().required().min(36),
-		password: passwordComplexity({
-			required: true,
-			min: 8,
-			max: 255,
-			lowerCase: 1,
-			upperCase: 1,
-			numeric: 1,
-			symbol: 1,
-			requirementCount: 4
-		})
+		password: passwordComplexity( passwordComplexityOptions ) 
 	});
 	return schema.validate(user);
 };
@@ -129,17 +122,25 @@ const userProfileValidate = (user) => {
 
 const userEmailValidate = (user) => {
 	const schema = Joi.object({
-		newEemail: Joi.string().email().required().min(5).max(255),
-		currentPassword: Joi.string().required().min(5).max(255)
+		newEmail: Joi.string().email().required().min(5).max(255),
+		password: Joi.string().required().min(5).max(255)
 	});
 	return schema.validate(user);
 };
 
+const userPasswordValidate = (user) => {
+	const schema = Joi.object({
+		password: Joi.string().required().min(5).max(255),
+		newPassword: passwordComplexity( passwordComplexityOptions )
+	});
+	return schema.validate(user);
+};
 exports.User = User;
 exports.validateUser = { 
 	register: userRecoverValidate,
 	login: userLoginValidate,
 	recover: userRecoverValidate,
 	profile: userProfileValidate,
-	email: userEmailValidate
+	email: userEmailValidate,
+	passwoes: userPasswordValidate
 };
