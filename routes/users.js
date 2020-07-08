@@ -15,7 +15,7 @@ const { createSession, updateSession } = require('../middleware/session');
 const { urlPath } = require('../lib');
 
 router.post('/register', async (req,res) => {
-    const { error } = validate.register(req.body);
+    const { error } = validateUser.register(req.body);
     if (error) return res.json({ message: error.details[0].message });
     //password required to be checked seperately
     if (!req.body.password) return res.status(400).send({ message:`Password is required.` });
@@ -45,15 +45,15 @@ router.post('/register', async (req,res) => {
 router.post('/login', async (req,res) => {
 
 	const { error } = validateUser.login(req.body);
-	if (error) return res.status(400).json({ message: error.details[0].message });
+	if (error) return res.json({ message: error.details[0].message });
 	
 	let user = await User.findOne({ email: req.body.email });
-	if (!user) return res.status(400).json({ message: 'Invalid email or password.' });
+	if (!user) return res.json({ message: 'Invalid email or password.' });
 
 	const validPassword = await bcrypt.compare(req.body.password, user.password);
-	if (!validPassword) return res.status(400).json({ message: 'Invalid email or password.' });
+	if (!validPassword) return res.json({ message: 'Invalid email or password.' });
 
-	if (!user.isActive) return res.status(400).json({ message: 'Your account seems de-activated.' });
+	if (!user.isActive) return res.json({ message: 'Your account seems de-activated.' });
 
 	const token = user.generateAuthToken();
 	await createSession( {..._.pick(user, ['email', '_id']), token }); //log_session
@@ -69,13 +69,18 @@ router.post('/recover-password', async (req, res) => {
 	//password required to be checked seperately
 	if (!req.body.password) return res.status(400).json({ message:`Password is required.` });
 	
+
 	try {
 		let user = await User.findOne({ passwordRecoverCode: req.body.code });
 		if (!user) return res.json({ message: `Recovery code is invalid.` });
 
+		if (!user.isActive) return res.json({ message: 'Your account seems de-activated.' });
+
 		const password = await bcrypt.hash(req.body.password, await bcrypt.genSalt(10));
 		user.set({password: password ,passwordRecoverCode: '-' });
-	
+		
+		//! expire other sessions which are signed in and active
+
 		await user.save();
 		const token = user.generateAuthToken();
 		await createSession( {..._.pick(user, ['email', '_id']), token, status: 'Recovered' }); //log_session
@@ -175,7 +180,7 @@ router.post('/email-set', auth, async (req, res) => {
 		if (error) return res.json({ message: error.details[0].message });
 		
 		const { _id, email, name } = jwt.verify(req.cookies["x-auth-token"], process.env.JWT_KEY);
-		const newEmail = req.body.newEmail;
+		const newEmail = req.body.email;
 		if ( email == newEmail ) return res.json({ response_type: 'warning', message: `This is your current email.`});
 		
 		let user = await User.findById( _id );
@@ -204,11 +209,11 @@ router.post('/email-set', auth, async (req, res) => {
 
 router.post('/password-set', auth, async (req, res) => {
 	try {
-		if (!req.body.password) return res.json({ message: `Current password is required.` });
+		if (!req.body.newPassword) return res.json({ message: `New password is required.` });
 		const { error } = validateUser.password(req.body);
 		if (error) return res.json({ message: error.details[0].message });
 		const { _id } = jwt.verify(req.cookies["x-auth-token"], process.env.JWT_KEY);
-		let user = await User.findById( _id );
+		const user = await User.findById( _id );
 		if (!user) return res.json({ message: `Error! Invalid password!` });
 		
 		const validPassword = await bcrypt.compare(req.body.password, user.password);
