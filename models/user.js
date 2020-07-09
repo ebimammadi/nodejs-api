@@ -137,7 +137,7 @@ const userPasswordValidate = (user) => {
 };
 exports.User = User;
 exports.validateUser = { 
-	register: userRecoverValidate,
+	register: userRegisterValidate,
 	login: userLoginValidate,
 	recover: userRecoverValidate,
 	profile: userProfileValidate,
