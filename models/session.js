@@ -28,7 +28,7 @@ const sessionSchema = new mongoose.Schema({
 	},
 	status: { 
 		type: String,
-		default: 'logged' 
+		default: 'Logged-in' 
 	}
 });
 
