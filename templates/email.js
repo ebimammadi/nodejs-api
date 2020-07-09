@@ -44,6 +44,17 @@ const emailTemplates = (message, template) => {
       Otherwise you can ignore this email.<br>`
       ;
   }
+
+  if (template =='userEmailVerifyTemplate' ){
+    return `${logoLiteral}<br><br>
+      Dear ${message.name},<br>You are required to confirm your email address. Please verify your email address by click at the following link:<br>
+      <a href="${process.env.APP_PATH}/verify-email/${message.emailVerify}" target="_blank">
+        ${process.env.APP_PATH}/verify-email/${message.emailVerify}
+      </a><br><br>You can also copy and paste the link to your web browser:<br>
+      ${process.env.APP_PATH}/verify-email/${message.emailVerify}`
+      ;
+  }
+  
 }
 
 exports.emailTemplates = emailTemplates;
