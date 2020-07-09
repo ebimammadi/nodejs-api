@@ -15,33 +15,30 @@ const { createSession, updateSession } = require('../middleware/session');
 const { urlPath } = require('../lib');
 
 router.post('/register', async (req,res) => {
-    const { error } = validateUser.register(req.body);
-    if (error) return res.json({ message: error.details[0].message });
-    //password required to be checked seperately
-    if (!req.body.password) return res.status(400).send({ message:`Password is required.` });
-		
-		try {
-			let user = await User.findOne({ email: req.body.email });
-			if (user) return res.status(400).json({ message: `User already registered.` });
+	if (!req.body.password) return res.send({ message:`'Password' is required.` });
+	const { error } = validateUser.register(req.body);
+	if (error) return res.json({ message: error.details[0].message });
+	
+	try {
+		let user = await User.findOne({ email: req.body.email });
+		if (user) return res.json({ message: `User already registered.` });
 
-			user = new User(_.pick(req.body, ['name','email','password']));
-			user.password = await bcrypt.hash(user.password, await bcrypt.genSalt(10));
-			user.emailVerify = sha256( user._id + Date.now()); //uuidv4();
-
-			await user.save();
-			await mailer(user.email,`Welcome to ${process.env.APP_NAME}`,user,'userRegisterTemplate')
-			const token = user.generateAuthToken();
-			await createSession( {..._.pick(user, ['email', '_id']), token, status: 'Registered' }); //log_session
-			user = _.pick(user, ['name', 'email', '_id']);
-			return res.header('x-auth-token', token)
-						.cookie('x-auth-token', token, cookieSetting)
-						.send(user); 
-    } catch(err) {
-        return res.status(400).send(err.message);
-    } 
+		user = new User(_.pick(req.body, ['name','email','password']));
+		user.password = await bcrypt.hash(user.password, await bcrypt.genSalt(10));
+		user.emailVerify = sha256( user._id + Date.now()); 
+		await user.save();
+		await mailer(user.email,`Welcome to ${process.env.APP_NAME}`,user,'userRegisterTemplate');
+		const token = user.generateAuthToken();
+		await createSession( {..._.pick(user, ['email', '_id']), token, status: 'Registered' }); //log log_session
+		user = _.pick(user, ['name', 'email', '_id']);
+		return res.header('x-auth-token', token)
+					.cookie('x-auth-token', token, cookieSetting)
+					.send(user); 
+	} catch(err) {
+			return res.status(400).send(err.message);
+	} 
     
 });
-//user login post
 router.post('/login', async (req,res) => {
 
 	const { error } = validateUser.login(req.body);
@@ -93,7 +90,6 @@ router.post('/recover-password', async (req, res) => {
 	} 
 	
 });
-
 router.post('/forget-password', async (req,res) => {
 	if (!req.body.email) return res.status(400).send(`Invalid email`);
 	try{
@@ -112,6 +108,7 @@ router.post('/forget-password', async (req,res) => {
 		return res.json({ response_type:`warning`, message: `${err.message}` });
 	}
 });
+
 router.get('/recover-password-verify-code/:code', async (req,res) => {
 	const code = req.params.code;
 	let user = await User.findOne({ passwordRecoverCode: code });
@@ -157,7 +154,6 @@ router.get('/profile-get', auth, async (req, res) => {
 		return res.send({ response_type: 'warning', message: `Error on server!`});
 	}
 });
-
 router.post('/profile-set', auth, async (req, res) => {
 	try {
 		const { error } = validateUser.profile(req.body);
@@ -173,7 +169,6 @@ router.post('/profile-set', auth, async (req, res) => {
 		return res.send({ response_type: 'warning', message: `Error on server!`});
 	}
 });
-
 router.post('/email-set', auth, async (req, res) => {
 	try {
 		const { error } = validateUser.email(req.body);
@@ -206,7 +201,6 @@ router.post('/email-set', auth, async (req, res) => {
 		return res.send({ response_type: 'warning', message: `Error on server!`});
 	}
 });
-
 router.post('/password-set', auth, async (req, res) => {
 	try {
 		if (!req.body.newPassword) return res.json({ message: `New password is required.` });
@@ -231,6 +225,19 @@ router.post('/password-set', auth, async (req, res) => {
 	} catch (err) {
 		console.log(err);
 		return res.send({ response_type: 'warning', message: `Error on server!`});
+	}
+});
+router.get('/send-verification-link', async (req,res) => {
+	try{
+		const { _id } = jwt.verify(req.cookies["x-auth-token"], process.env.JWT_KEY);
+		const user = await User.findById(_id);
+		user.emailVerify = sha256( user._id + Date.now()); 
+		console.log(user.emailVerify);
+		await user.save();
+		await mailer(user.email,`Confirm your email at ${process.env.APP_NAME}`,user,'userEmailVerifyTemplate');
+		return res.json({ response_type:`success`, message: `Verification code has been sent to your mail account. Please check your mailbox.` });
+	} catch(err){
+		return res.json({ response_type:`warning`, message: `${err.message}` });
 	}
 });
 
