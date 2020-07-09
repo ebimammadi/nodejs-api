@@ -232,7 +232,6 @@ router.get('/send-verification-link', async (req,res) => {
 		const { _id } = jwt.verify(req.cookies["x-auth-token"], process.env.JWT_KEY);
 		const user = await User.findById(_id);
 		user.emailVerify = sha256( user._id + Date.now()); 
-		console.log(user.emailVerify);
 		await user.save();
 		await mailer(user.email,`Confirm your email at ${process.env.APP_NAME}`,user,'userEmailVerifyTemplate');
 		return res.json({ response_type:`success`, message: `Verification code has been sent to your mail account. Please check your mailbox.` });
