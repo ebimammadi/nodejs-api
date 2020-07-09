@@ -4,7 +4,7 @@ const _ = require('lodash');
 const { Session } = require('../models/session');
 
 const createSession = async (sessionObj) => {
-	if (!sessionObj.status) sessionObj.status = 'Logged';
+	if (!sessionObj.status) sessionObj.status = 'Logged-in';
 	const session = new Session({
 		user_id: sessionObj._id,
 		email: sessionObj.email,
