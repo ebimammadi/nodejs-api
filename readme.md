@@ -14,7 +14,7 @@ JWT_KEY = test
 
 JWT_EXP_HOUR = 72
 
-MAIL_SERVER = mail.chapar.tech
+MAIL_SERVER = mail.test.com
 
 MAIL_USER = noreply@test.com
 
